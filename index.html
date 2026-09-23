@@ -19,7 +19,7 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
-    /* 畫布透明棋盤背景 */
+    /* 畫布棋盤格背景 */
     .canvas-bg-pattern {
       background-color: #f1f5f9;
       background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%), 
@@ -139,32 +139,28 @@
           A字三角立牌製作機
           <span class="bg-indigo-500/30 text-indigo-300 text-xs px-2 py-0.5 rounded-full border border-indigo-400/30 font-normal">雙面同步版 (1張A4印2個)</span>
         </h1>
-        <p class="text-[11px] text-slate-400">正面/背面即時同步 • 180°自動翻轉 • 8種淡彩底色 • 10種典雅邊框 • 支援專案備份匯入匯出</p>
+        <p class="text-[11px] text-slate-400">正面/背面即時同步 • 180°自動翻轉 • 8種淡彩底色 • 10種典雅邊框 • 圖章印記 • 備份匯入匯出</p>
       </div>
     </div>
 
     <!-- 頂端動作按鈕列 -->
     <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-      <!-- 示範名單按鈕 -->
       <button type="button" id="btnLoadSample" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition">
         <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
         <span>載入示範名單</span>
       </button>
 
-      <!-- 備份匯出按鈕 -->
       <button type="button" id="btnExportBackup" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition" title="打包下載當前版面、樣式與名單資料">
         <i class="fa-solid fa-file-export text-sky-400"></i>
         <span>匯出備份</span>
       </button>
 
-      <!-- 備份匯入按鈕 -->
       <label class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-2.5 py-1.5 rounded-md flex items-center gap-1.5 cursor-pointer transition" title="讀取先前備份的 JSON 專案設定檔">
         <i class="fa-solid fa-file-import text-emerald-400"></i>
         <span>匯入備份</span>
         <input type="file" id="inputImportBackup" accept=".json" class="hidden">
       </label>
 
-      <!-- 列印按鈕 -->
       <button type="button" id="btnPrint" class="text-xs sm:text-sm bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium px-3.5 py-1.5 rounded-md shadow flex items-center gap-2 transition">
         <i class="fa-solid fa-print"></i>
         <span>立即列印 (A4 雙立牌)</span>
@@ -172,7 +168,6 @@
     </div>
   </header>
 
-  <!-- 主操作區：左側面板 + 右側 A4 畫布預覽 -->
   <div class="flex-1 flex flex-col lg:flex-row overflow-hidden no-print">
 
     <aside class="w-full lg:w-[500px] xl:w-[530px] bg-white border-r border-slate-200 flex flex-col h-[calc(100vh-58px)] shadow-sm">
@@ -196,7 +191,6 @@
         <!-- ================= 頁籤 1: 規格、色彩與邊框 ================= -->
         <div id="tabContentFormat" class="tab-pane space-y-4">
           
-          <!-- 3種指定尺寸切換 -->
           <div class="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3.5 space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="font-bold text-xs text-indigo-900 flex items-center gap-1.5">
@@ -298,7 +292,6 @@
         <!-- ================= 頁籤 2: 總版面設計與同步編排 ================= -->
         <div id="tabContentDesign" class="tab-pane hidden space-y-4">
           
-          <!-- 同步切換列與快速對齊工具 -->
           <div class="bg-indigo-50/80 border border-indigo-200 rounded-xl p-3 space-y-2">
             <div class="flex items-center justify-between">
               <label class="font-bold text-xs text-indigo-950 flex items-center gap-2 cursor-pointer">
@@ -308,25 +301,50 @@
               <span class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-medium">背面自動 180° 鏡射翻轉</span>
             </div>
             <p class="text-[11px] text-slate-600">
-              開啟時，編輯正面（下方 70mm）的文字內容、字型、位置與大小，背面（上方 70mm）將全自動鏡射並顛倒 180°，摺成立牌後前後兩面皆為正向！
+              開啟時，編輯正面（下方 70mm）的文字內容、圖章、位置與大小，背面（上方 70mm）將自動鏡射並顛倒 180°，摺成立牌後前後兩面皆為正向！
             </p>
           </div>
 
-          <!-- 工具箱：新增元件 -->
-          <div class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-sm">
-            <button type="button" id="btnAddText" class="flex-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-bold transition">
-              <i class="fa-solid fa-plus text-[10px]"></i> 新增文字元件
-            </button>
-            <label class="flex-1 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-bold cursor-pointer transition">
-              <i class="fa-solid fa-image text-[10px]"></i> 插入圖片/校徽
-              <input type="file" id="inputUploadImage" accept="image/*" class="hidden">
-            </label>
-            <button type="button" id="btnSyncToBackNow" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-2.5 py-1.5 rounded-lg font-medium transition" title="強制將正面覆蓋複製至背面">
-              <i class="fa-solid fa-arrows-rotate mr-1"></i> 強制同步至背面
-            </button>
+          <!-- 工具箱：新增元件 (文字、圖片、圖章) -->
+          <div class="bg-white border border-slate-200 rounded-xl p-2.5 space-y-2 shadow-sm">
+            <div class="flex items-center justify-between gap-2">
+              <button type="button" id="btnAddText" class="flex-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-bold transition">
+                <i class="fa-solid fa-plus text-[10px]"></i> 新增文字元件
+              </button>
+              <label class="flex-1 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-bold cursor-pointer transition">
+                <i class="fa-solid fa-image text-[10px]"></i> 插入圖片/校徽
+                <input type="file" id="inputUploadImage" accept="image/*" class="hidden">
+              </label>
+              <button type="button" id="btnSyncToBackNow" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-2.5 py-1.5 rounded-lg font-medium transition" title="強制將正面覆蓋複製至背面">
+                <i class="fa-solid fa-arrows-rotate mr-1"></i> 強制同步
+              </button>
+            </div>
+
+            <!-- 圖章快選插入列 -->
+            <div class="border-t border-slate-100 pt-2">
+              <div class="flex items-center justify-between mb-1.5 text-[11px]">
+                <span class="font-bold text-slate-700 flex items-center gap-1">
+                  <i class="fa-solid fa-stamp text-rose-500"></i> 快速插入圖章：
+                </span>
+                <span class="text-[10px] text-slate-400">點擊插入不同造型印記</span>
+              </div>
+              <div class="grid grid-cols-4 gap-1.5">
+                <button type="button" class="btn-quick-stamp text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 py-1 rounded flex items-center justify-center gap-1 font-medium transition" data-shape="square">
+                  <i class="fa-regular fa-square text-[11px]"></i> 方形章
+                </button>
+                <button type="button" class="btn-quick-stamp text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 py-1 rounded flex items-center justify-center gap-1 font-medium transition" data-shape="circle">
+                  <i class="fa-regular fa-circle text-[11px]"></i> 圓形章
+                </button>
+                <button type="button" class="btn-quick-stamp text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 py-1 rounded flex items-center justify-center gap-1 font-medium transition" data-shape="rounded">
+                  <i class="fa-solid fa-ticket text-[11px]"></i> 圓角章
+                </button>
+                <button type="button" class="btn-quick-stamp text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 py-1 rounded flex items-center justify-center gap-1 font-medium transition" data-shape="badge">
+                  <i class="fa-solid fa-hashtag text-[11px]"></i> 數字/桌號
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- 視覺化總版面畫布 (長度 × 14cm) -->
           <div class="border border-slate-300 rounded-xl p-3 bg-slate-100 space-y-2">
             <div class="flex items-center justify-between text-xs text-slate-600">
               <span class="font-bold flex items-center gap-1.5">
@@ -348,15 +366,13 @@
 
             <!-- 畫布視窗：自動適應尺寸，消除上下左右捲軸，100% 完整呈現 -->
             <div id="masterCanvasScrollContainer" class="canvas-bg-pattern overflow-hidden p-2 rounded-lg flex items-center justify-center h-[340px] sm:h-[380px] border border-slate-200 relative select-none">
-              <!-- 縮放外框：寬高隨適應比例嚴格貼合，杜絕虛擬空白與捲軸 -->
+              <!-- 縮放外框：寬高隨適應比例嚴格貼合 -->
               <div id="canvasScalerWrapper" class="relative transition-all duration-150 ease-out flex items-center justify-center">
                 <!-- 總版面主畫布 -->
                 <div id="tentMasterCanvas" class="bg-white border border-slate-400 rounded-sm absolute top-0 left-0">
-                  <!-- 摺線區分指示器 (背面 70mm / 正面 70mm) -->
-                  <div id="canvasFoldGuide" class="absolute w-full border-b-2 border-dashed border-rose-400 pointer-events-none z-10 flex items-center justify-between px-2 text-[9px] text-rose-500 font-mono font-bold" style="top: 70mm;">
-                    <span>▲ 背面區域 (折疊時朝後，自動鏡射翻轉)</span>
-                    <span>【對摺山摺線 70mm】</span>
-                    <span>▼ 正面區域 (正向編輯主區)</span>
+                  <!-- 純紅色山摺線 (高度為 0，絕對鎖定在 50% 處) -->
+                  <div id="canvasFoldGuide" class="absolute w-full pointer-events-none z-20" style="top: 50%; left: 0; height: 0;">
+                    <div class="w-full border-t-2 border-dashed border-rose-500 absolute top-0 left-0"></div>
                   </div>
                 </div>
               </div>
@@ -367,7 +383,6 @@
             </div>
           </div>
 
-          <!-- 元件屬性編輯面板 -->
           <div id="elementPropertyPanel" class="border border-indigo-200 rounded-xl p-3 bg-indigo-50/50 space-y-2.5">
             <div class="flex items-center justify-between border-b border-indigo-100 pb-2">
               <span class="font-bold text-xs text-indigo-950 flex items-center gap-1.5">
@@ -382,7 +397,7 @@
             </div>
 
             <div id="noElementHint" class="text-xs text-slate-400 py-3 text-center">
-              請在上方展開總畫布中點選任一文字或圖形進行樣式調整。
+              請在上方展開總畫布中點選任一文字、圖章或圖片進行樣式調整。
             </div>
 
             <!-- 文字內容與控制 -->
@@ -397,7 +412,6 @@
 
               <!-- 雙層對齊工具：1. 文字區塊內部對齊  2. 元件版面位置對齊 -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white border border-indigo-100 rounded-lg p-2.5">
-                <!-- 1. 文字內部對齊 -->
                 <div class="space-y-1">
                   <span class="text-[10px] font-bold text-slate-600 flex items-center gap-1">
                     <i class="fa-solid fa-paragraph text-indigo-500"></i> 文字段落對齊：
@@ -415,7 +429,6 @@
                   </div>
                 </div>
 
-                <!-- 2. 元件在立牌上的版面外框對齊 -->
                 <div class="space-y-1">
                   <span class="text-[10px] font-bold text-slate-600 flex items-center gap-1">
                     <i class="fa-solid fa-arrows-left-right-to-line text-indigo-500"></i> 元件版面定位：
@@ -502,6 +515,88 @@
               </div>
             </div>
 
+            <div id="propStampGroup" class="space-y-2.5 hidden bg-white border border-rose-100 rounded-lg p-3">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">圖章外觀造型</label>
+                  <select id="propStampShape" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs">
+                    <option value="square">方形章 (傳統大印)</option>
+                    <option value="circle">圓形章 (標準戳印)</option>
+                    <option value="rounded">圓角矩形 (VIP席)</option>
+                    <option value="badge">數字/桌號圓章</option>
+                    <option value="double_circle">雙環圓章 (主席/尊爵)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-700 mb-0.5">印章文字 / 標籤</label>
+                  <input type="text" id="propStampText" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs font-bold" placeholder="貴賓 / {桌號}">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] text-slate-600 mb-0.5">填色底色風格</label>
+                  <select id="propStampFill" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs">
+                    <option value="transparent">空心線條 (透明底)</option>
+                    <option value="soft">淡雅淺底 (印泥雙色)</option>
+                    <option value="solid">實心反白 (深色醒目)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-600 mb-0.5">印章邊框樣式</label>
+                  <select id="propStampBorder" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs">
+                    <option value="solid">標準實線框</option>
+                    <option value="double">古典雙線框</option>
+                    <option value="dashed">復古虛線框</option>
+                    <option value="none">無外框線</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <label class="block text-[10px] text-slate-600 mb-0.5">印泥顏色</label>
+                  <div class="flex items-center gap-1 mt-0.5">
+                    <input type="color" id="propStampColorPicker" value="#dc2626" class="w-6 h-6 p-0 border border-slate-300 rounded cursor-pointer">
+                    <span id="propStampColorCode" class="text-[10px] font-mono text-slate-500">#dc2626</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-600 mb-0.5">印面字級 (pt)</label>
+                  <input type="number" id="propStampFontSize" min="6" max="36" value="12" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs text-center">
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-600 mb-0.5">微傾角度</label>
+                  <select id="propStampTilt" class="w-full bg-slate-50 border border-slate-300 rounded px-1 py-1 text-xs">
+                    <option value="0">0° 端正</option>
+                    <option value="-8">-8° 微側(自然)</option>
+                    <option value="8">+8° 順時側</option>
+                    <option value="-15">-15° 大角度</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 印泥快速選色按鈕列 -->
+              <div class="flex items-center gap-1.5 pt-1 border-t border-slate-100">
+                <span class="text-[10px] text-slate-500">推薦印泥：</span>
+                <button type="button" class="btn-stamp-color text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded border border-red-300" data-color="#dc2626">硃砂紅</button>
+                <button type="button" class="btn-stamp-color text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-300" data-color="#d97706">尊貴金</button>
+                <button type="button" class="btn-stamp-color text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded border border-blue-300" data-color="#1d4ed8">商務藍</button>
+                <button type="button" class="btn-stamp-color text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-300" data-color="#059669">翡翠綠</button>
+                <button type="button" class="btn-stamp-color text-[10px] bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded border border-slate-300" data-color="#1e293b">曜石黑</button>
+              </div>
+
+              <div>
+                <label class="block text-[10px] text-slate-600 mb-0.5">印面字型</label>
+                <select id="propStampFontFamily" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs">
+                  <option value="'DFKai-SB', '標楷體', KaiTi, serif">標楷體 (篆印神韻推薦)</option>
+                  <option value="'Noto Serif TC', serif">思源宋體 (古典莊嚴)</option>
+                  <option value="'JetBrains Mono', monospace">等寬數字 (適合桌號)</option>
+                  <option value="'Noto Sans TC', sans-serif">思源黑體 (現代俐落)</option>
+                </select>
+              </div>
+            </div>
+
             <!-- 幾何位置與尺寸 (毫米) -->
             <div id="propGeometryGroup" class="grid grid-cols-4 gap-2 pt-2 border-t border-indigo-100 hidden text-xs">
               <div>
@@ -527,7 +622,7 @@
           <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
             <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
               <span><i class="fa-solid fa-code text-indigo-500 mr-1"></i> 可用變數標籤 (點擊複製)</span>
-              <span class="text-[10px] text-slate-400">貼入文字中即自動套印</span>
+              <span class="text-[10px] text-slate-400">貼入文字或印章中自動套印</span>
             </label>
             <div id="chipsContainer" class="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
               <!-- 動態產生變數按鈕 -->
@@ -577,7 +672,6 @@
 
     </aside>
 
-    <!-- 右側：A4 所見即所得畫布預覽區域 (每張 A4 直印 2 個立牌) -->
     <main class="flex-1 bg-slate-200/80 overflow-auto flex flex-col items-center p-4 relative">
       
       <!-- 預覽工具列 -->
@@ -627,8 +721,6 @@
 
   <script>
     /* =================== 1. 系統常數與規格定義 =================== */
-    // 3種指定尺寸設定 (單位: mm)
-    // 展開高統一為 140mm (背面 70mm + 正面 70mm)
     const TENT_SIZES = {
       size_1: {
         name: "1號立牌 (11.5 × 7 × 6.5 cm)",
@@ -656,7 +748,6 @@
       }
     };
 
-    // 8 款淡淺色系色票定義
     const PASTEL_PALETTES = [
       { name: "純淨白", hex: "#ffffff", border: "#e2e8f0" },
       { name: "象牙米白", hex: "#fefcf5", border: "#fde68a" },
@@ -668,7 +759,6 @@
       { name: "雅緻銀灰", hex: "#f8fafc", border: "#cbd5e1" }
     ];
 
-    // 像素轉換基準 (1mm = 3.78px 在 96DPI 下)
     const MM_TO_PX = 3.78;
 
     const state = {
@@ -683,7 +773,7 @@
       customFonts: [],
       currentPage: 1,
       totalPages: 1,
-      selectedElementId: null,
+      selectedElementId: 'front_name',
       data: [],
       fields: [],
       syncFrontBack: true,
@@ -797,7 +887,6 @@
       ]
     };
 
-    // 示範貴賓席位名單
     const SAMPLE_RECORDS = [
       { 姓名: '李大維', 單位: '國立臺灣師範大學', 職稱: '講座教授', 桌號: '第 1 桌' },
       { 姓名: '陳惠芬', 單位: '新北市教育局', 職稱: '主任秘書', 桌號: '第 1 桌' },
@@ -821,11 +910,13 @@
       loadDataRecords(SAMPLE_RECORDS);
       fitMasterCanvas();
       renderMasterEditor();
+      updatePropertyPanel();
       renderPreview();
     });
 
     function renderPastelPaletteButtons() {
       const container = document.getElementById('pastelPaletteContainer');
+      if (!container) return;
       container.innerHTML = '';
       PASTEL_PALETTES.forEach((p) => {
         const btn = document.createElement('button');
@@ -838,7 +929,8 @@
         `;
         btn.addEventListener('click', () => {
           state.bgColor = p.hex;
-          document.getElementById('customColorPicker').value = p.hex;
+          const picker = document.getElementById('customColorPicker');
+          if (picker) picker.value = p.hex;
           renderPastelPaletteButtons();
           renderMasterEditor();
           renderPreview();
@@ -846,23 +938,25 @@
         container.appendChild(btn);
       });
 
-      // 自訂顏色選擇器
       const picker = document.getElementById('customColorPicker');
-      picker.addEventListener('input', (e) => {
-        state.bgColor = e.target.value;
-        renderPastelPaletteButtons();
-        renderMasterEditor();
-        renderPreview();
-      });
+      if (picker) {
+        picker.addEventListener('input', (e) => {
+          state.bgColor = e.target.value;
+          renderPastelPaletteButtons();
+          renderMasterEditor();
+          renderPreview();
+        });
+      }
 
-      // 邊框樣式切換
       const borderSelect = document.getElementById('selectBorderStyle');
-      borderSelect.value = state.borderStyle;
-      borderSelect.addEventListener('change', (e) => {
-        state.borderStyle = e.target.value;
-        renderMasterEditor();
-        renderPreview();
-      });
+      if (borderSelect) {
+        borderSelect.value = state.borderStyle;
+        borderSelect.addEventListener('change', (e) => {
+          state.borderStyle = e.target.value;
+          renderMasterEditor();
+          renderPreview();
+        });
+      }
     }
 
     function setupTabs() {
@@ -874,10 +968,12 @@
 
       tabs.forEach(tab => {
         const btnElem = document.getElementById(tab.btn);
+        if (!btnElem) return;
         btnElem.addEventListener('click', () => {
           tabs.forEach(t => {
             const b = document.getElementById(t.btn);
             const c = document.getElementById(t.content);
+            if (!b || !c) return;
             if (t.btn === tab.btn) {
               b.className = 'tab-btn flex-1 py-3 px-2 border-b-2 border-indigo-600 text-indigo-600 font-bold flex items-center justify-center gap-1.5';
               c.classList.remove('hidden');
@@ -900,7 +996,6 @@
       });
     }
 
-    // 尺寸選項切換事件
     function setupSizeSelectors() {
       const radios = document.querySelectorAll('input[name="tentSizePreset"]');
       radios.forEach(radio => {
@@ -916,23 +1011,37 @@
         });
       });
 
-      // 列印線條與位移輸入
-      document.getElementById('chkPrintFoldLine').addEventListener('change', (e) => {
-        state.showFoldLine = e.target.checked;
-        renderPreview();
-      });
-      document.getElementById('chkPrintCutLine').addEventListener('change', (e) => {
-        state.showCutBorder = e.target.checked;
-        renderPreview();
-      });
-      document.getElementById('inputOffsetX').addEventListener('input', (e) => {
-        state.offsetX = parseFloat(e.target.value) || 0;
-        renderPreview();
-      });
-      document.getElementById('inputOffsetY').addEventListener('input', (e) => {
-        state.offsetY = parseFloat(e.target.value) || 0;
-        renderPreview();
-      });
+      const foldChk = document.getElementById('chkPrintFoldLine');
+      if (foldChk) {
+        foldChk.addEventListener('change', (e) => {
+          state.showFoldLine = e.target.checked;
+          renderPreview();
+        });
+      }
+
+      const cutChk = document.getElementById('chkPrintCutLine');
+      if (cutChk) {
+        cutChk.addEventListener('change', (e) => {
+          state.showCutBorder = e.target.checked;
+          renderPreview();
+        });
+      }
+
+      const offX = document.getElementById('inputOffsetX');
+      if (offX) {
+        offX.addEventListener('input', (e) => {
+          state.offsetX = parseFloat(e.target.value) || 0;
+          renderPreview();
+        });
+      }
+
+      const offY = document.getElementById('inputOffsetY');
+      if (offY) {
+        offY.addEventListener('input', (e) => {
+          state.offsetY = parseFloat(e.target.value) || 0;
+          renderPreview();
+        });
+      }
     }
 
     function updateSizeOptionStyles() {
@@ -944,11 +1053,12 @@
           card.className = 'border border-slate-200 bg-white rounded-lg p-2.5 cursor-pointer text-center transition flex flex-col items-center justify-center hover:shadow-sm size-option-card';
         }
       });
-      document.getElementById('canvasDimLabel').innerText = `${TENT_SIZES[state.currentSizeKey].width} × 140 mm`;
-      document.getElementById('specLabelText').innerText = TENT_SIZES[state.currentSizeKey].name;
+      const dimLabel = document.getElementById('canvasDimLabel');
+      if (dimLabel) dimLabel.innerText = `${TENT_SIZES[state.currentSizeKey].width} × 140 mm`;
+      const specLabel = document.getElementById('specLabelText');
+      if (specLabel) specLabel.innerText = TENT_SIZES[state.currentSizeKey].name;
     }
 
-    // 當切換尺寸時，將元件寬度平移適應新尺寸
     function autoAdjustElementWidths() {
       const curW = TENT_SIZES[state.currentSizeKey].width;
       state.elements.forEach(el => {
@@ -961,7 +1071,6 @@
       });
     }
 
-    // 自動計算並適應總畫布尺寸，確保 100% 完整顯示、無任何方向捲軸
     function fitMasterCanvas() {
       const container = document.getElementById('masterCanvasScrollContainer');
       if (!container) return;
@@ -970,11 +1079,9 @@
       const wPx = curSpec.width * MM_TO_PX;
       const hPx = curSpec.height * MM_TO_PX; // 140mm = 529.2px
 
-      // 取得容器內部扣除邊距之可用空間
       const availableW = Math.max(160, container.clientWidth - 28);
       const availableH = Math.max(160, container.clientHeight - 28);
 
-      // 以短邊為基準，計算百分之百容納比例
       const scaleW = availableW / wPx;
       const scaleH = availableH / hPx;
       const bestScale = Math.min(scaleW, scaleH);
@@ -1010,7 +1117,6 @@
     }
 
     function setupMasterDesigner() {
-      // 自動最適按鈕
       const btnAutoFit = document.getElementById('btnCanvasAutoFit');
       if (btnAutoFit) {
         btnAutoFit.addEventListener('click', () => {
@@ -1019,17 +1125,22 @@
         });
       }
 
-      // 縮放按鈕
-      document.getElementById('btnCanvasZoomIn').addEventListener('click', () => {
-        state.isAutoFit = false;
-        applyMasterZoom(state.canvasZoom + 0.1, false);
-      });
-      document.getElementById('btnCanvasZoomOut').addEventListener('click', () => {
-        state.isAutoFit = false;
-        applyMasterZoom(state.canvasZoom - 0.1, false);
-      });
+      const btnZIn = document.getElementById('btnCanvasZoomIn');
+      if (btnZIn) {
+        btnZIn.addEventListener('click', () => {
+          state.isAutoFit = false;
+          applyMasterZoom(state.canvasZoom + 0.1, false);
+        });
+      }
 
-      // 視窗大小改變時，若處於最適模式則即時重算
+      const btnZOut = document.getElementById('btnCanvasZoomOut');
+      if (btnZOut) {
+        btnZOut.addEventListener('click', () => {
+          state.isAutoFit = false;
+          applyMasterZoom(state.canvasZoom - 0.1, false);
+        });
+      }
+
       window.addEventListener('resize', () => {
         const designTab = document.getElementById('tabContentDesign');
         if (designTab && !designTab.classList.contains('hidden') && state.isAutoFit) {
@@ -1037,55 +1148,34 @@
         }
       });
 
-      // 新增文字元件 (預設新增於正面下半部)
-      document.getElementById('btnAddText').addEventListener('click', () => {
-        const curW = TENT_SIZES[state.currentSizeKey].width;
-        const newEl = {
-          id: 'text_' + Date.now(),
-          type: 'text',
-          side: 'front',
-          x: Math.round((curW - 80) / 2),
-          y: 105,
-          width: 80,
-          height: 12,
-          text: '請輸入文字',
-          fontFamily: "'DFKai-SB', '標楷體', KaiTi, BiauKai, serif",
-          fontSize: 18,
-          bold: false,
-          underline: false,
-          color: '#1e293b',
-          align: 'center',
-          rotate180: false
-        };
-        state.elements.push(newEl);
-        state.selectedElementId = newEl.id;
-
-        if (state.syncFrontBack) {
-          syncSingleElementToBack(newEl);
-        }
-
-        renderMasterEditor();
-        updatePropertyPanel();
-        renderPreview();
-        showToast('已新增文字元件！', 'info');
+      // 快速插入圖章按鈕
+      document.querySelectorAll('.btn-quick-stamp').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const shape = btn.getAttribute('data-shape') || 'circle';
+          createStampElement(shape);
+        });
       });
 
-      // 插入圖片 (校徽/圖示)
-      document.getElementById('inputUploadImage').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (evt) => {
+      // 新增文字元件
+      const btnAddTxt = document.getElementById('btnAddText');
+      if (btnAddTxt) {
+        btnAddTxt.addEventListener('click', () => {
           const curW = TENT_SIZES[state.currentSizeKey].width;
           const newEl = {
-            id: 'img_' + Date.now(),
-            type: 'image',
+            id: 'text_' + Date.now(),
+            type: 'text',
             side: 'front',
-            x: Math.round((curW - 20) / 2),
-            y: 72,
-            width: 20,
-            height: 20,
-            src: evt.target.result,
+            x: Math.round((curW - 80) / 2),
+            y: 105,
+            width: 80,
+            height: 12,
+            text: '請輸入文字',
+            fontFamily: "'DFKai-SB', '標楷體', KaiTi, BiauKai, serif",
+            fontSize: 18,
+            bold: false,
+            underline: false,
+            color: '#1e293b',
+            align: 'center',
             rotate180: false
           };
           state.elements.push(newEl);
@@ -1098,36 +1188,135 @@
           renderMasterEditor();
           updatePropertyPanel();
           renderPreview();
-          showToast('已插入圖片！', 'success');
-        };
-        reader.readAsDataURL(file);
-        e.target.value = '';
-      });
+          showToast('已新增文字元件！', 'info');
+        });
+      }
+
+      // 插入圖片 (校徽/圖示)
+      const inputImg = document.getElementById('inputUploadImage');
+      if (inputImg) {
+        inputImg.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const curW = TENT_SIZES[state.currentSizeKey].width;
+            const newEl = {
+              id: 'img_' + Date.now(),
+              type: 'image',
+              side: 'front',
+              x: Math.round((curW - 20) / 2),
+              y: 72,
+              width: 20,
+              height: 20,
+              src: evt.target.result,
+              rotate180: false
+            };
+            state.elements.push(newEl);
+            state.selectedElementId = newEl.id;
+
+            if (state.syncFrontBack) {
+              syncSingleElementToBack(newEl);
+            }
+
+            renderMasterEditor();
+            updatePropertyPanel();
+            renderPreview();
+            showToast('已插入圖片！', 'success');
+          };
+          reader.readAsDataURL(file);
+          e.target.value = '';
+        });
+      }
 
       // 強制同步按鈕
-      document.getElementById('btnSyncToBackNow').addEventListener('click', () => {
-        triggerAutoSyncBack(true);
-        renderMasterEditor();
-        updatePropertyPanel();
-        renderPreview();
-        showToast('已將正面內容全數同步鏡射至背面！', 'success');
-      });
+      const btnSync = document.getElementById('btnSyncToBackNow');
+      if (btnSync) {
+        btnSync.addEventListener('click', () => {
+          triggerAutoSyncBack(true);
+          renderMasterEditor();
+          updatePropertyPanel();
+          renderPreview();
+          showToast('已將正面內容全數同步鏡射至背面！', 'success');
+        });
+      }
 
       // 即時連動開關
-      document.getElementById('chkSyncFrontBack').addEventListener('change', (e) => {
-        state.syncFrontBack = e.target.checked;
-        if (state.syncFrontBack) {
-          triggerAutoSyncBack();
-          renderMasterEditor();
-          renderPreview();
-          showToast('已開啟正面背面即時連動', 'info');
-        }
-      });
+      const chkSync = document.getElementById('chkSyncFrontBack');
+      if (chkSync) {
+        chkSync.addEventListener('change', (e) => {
+          state.syncFrontBack = e.target.checked;
+          if (state.syncFrontBack) {
+            triggerAutoSyncBack();
+            renderMasterEditor();
+            renderPreview();
+            showToast('已開啟正面背面即時連動', 'info');
+          }
+        });
+      }
     }
 
-    // 元件版面定位與文字內部對齊控制
+    function createStampElement(shape = 'circle') {
+      const curW = TENT_SIZES[state.currentSizeKey].width;
+      let stampText = '貴賓';
+      let w = 22, h = 22;
+      let fillMode = 'transparent';
+      let borderStyle = 'solid';
+      let color = '#dc2626';
+
+      if (shape === 'square') {
+        stampText = '貴賓';
+        w = 20; h = 20;
+      } else if (shape === 'rounded') {
+        stampText = 'VIP席';
+        w = 26; h = 14;
+        fillMode = 'soft';
+        color = '#d97706';
+      } else if (shape === 'badge') {
+        stampText = '{桌號}';
+        w = 22; h = 22;
+        fillMode = 'solid';
+        color = '#1d4ed8';
+      } else if (shape === 'double_circle') {
+        stampText = '主席';
+        w = 22; h = 22;
+        borderStyle = 'double';
+      }
+
+      const newStamp = {
+        id: 'stamp_' + Date.now(),
+        type: 'stamp',
+        side: 'front',
+        x: Math.round(curW - w - 8),
+        y: 76,
+        width: w,
+        height: h,
+        shape: shape,
+        text: stampText,
+        color: color,
+        fillMode: fillMode,
+        borderStyle: borderStyle,
+        tiltAngle: shape === 'square' || shape === 'circle' ? -8 : 0,
+        fontSize: shape === 'badge' ? 12 : 13,
+        fontFamily: shape === 'badge' ? "'JetBrains Mono', monospace" : "'DFKai-SB', '標楷體', KaiTi, serif",
+        bold: true,
+        rotate180: false
+      };
+
+      state.elements.push(newStamp);
+      state.selectedElementId = newStamp.id;
+
+      if (state.syncFrontBack) {
+        syncSingleElementToBack(newStamp);
+      }
+
+      renderMasterEditor();
+      updatePropertyPanel();
+      renderPreview();
+      showToast('已成功插入圖章！', 'success');
+    }
+
     function setupAlignmentControls() {
-      // 1. 元件在立牌上的外框定位 (調整 X 座標)
       const btnAlignLeft = document.getElementById('btnAlignLeft');
       const btnAlignCenter = document.getElementById('btnAlignCenter');
       const btnAlignRight = document.getElementById('btnAlignRight');
@@ -1161,7 +1350,6 @@
         });
       }
 
-      // 2. 文字區塊內部對齊 (靠左 / 置中 / 靠右)
       const btnTextAlignLeft = document.getElementById('btnTextAlignLeft');
       const btnTextAlignCenter = document.getElementById('btnTextAlignCenter');
       const btnTextAlignRight = document.getElementById('btnTextAlignRight');
@@ -1197,7 +1385,6 @@
       }
     }
 
-    // 更新文字內部對齊按鈕的高亮外觀
     function updateTextAlignButtons(align) {
       const btnL = document.getElementById('btnTextAlignLeft');
       const btnC = document.getElementById('btnTextAlignCenter');
@@ -1212,7 +1399,6 @@
       btnR.className = align === 'right' ? activeCls : inactiveCls;
     }
 
-    // 渲染設計編輯器畫布
     function renderMasterEditor() {
       const canvas = document.getElementById('tentMasterCanvas');
       if (!canvas) return;
@@ -1222,22 +1408,20 @@
       canvas.style.backgroundColor = state.bgColor;
       canvas.innerHTML = '';
 
-      // 渲染背面與正面裝飾邊框 (10 種樣式)
       renderDecoratedBorders(canvas, curSpec.width);
 
-      // 中央山摺線導引
+      // 中央山摺線 (高度為 0，純紅色虛線精準鎖定 50% 正中線)
       const foldGuide = document.createElement('div');
       foldGuide.id = 'canvasFoldGuide';
-      foldGuide.className = 'absolute w-full border-b-2 border-dashed border-rose-400 pointer-events-none z-10 flex items-center justify-between px-2 text-[9px] text-rose-500 font-mono font-bold';
-      foldGuide.style.top = `${70 * MM_TO_PX}px`;
+      foldGuide.className = 'absolute w-full pointer-events-none z-20';
+      foldGuide.style.top = '50%';
+      foldGuide.style.left = '0';
+      foldGuide.style.height = '0';
       foldGuide.innerHTML = `
-        <span>▲ 背面區域 (折疊時朝後，自動鏡射翻轉)</span>
-        <span>【對摺山摺線 70mm】</span>
-        <span>▼ 正面區域 (正向編輯主區)</span>
+        <div class="w-full border-t-2 border-dashed border-rose-500 absolute top-0 left-0"></div>
       `;
       canvas.appendChild(foldGuide);
 
-      // 點擊空白處切換選取
       canvas.onmousedown = (e) => {
         if (e.target === canvas) {
           state.selectedElementId = null;
@@ -1246,7 +1430,6 @@
         }
       };
 
-      // 渲染所有圖元
       state.elements.forEach(el => {
         const dom = document.createElement('div');
         dom.className = `designer-element ${state.selectedElementId === el.id ? 'selected' : ''} ${el.y < 70 ? 'is-back' : ''}`;
@@ -1262,14 +1445,12 @@
           dom.style.transform = 'none';
         }
 
-        // 縮放手柄
         const brHandle = document.createElement('div');
         brHandle.className = 'resize-handle br';
         dom.appendChild(brHandle);
 
-        // 元件內部渲染
         const contentBox = document.createElement('div');
-        contentBox.className = 'w-full h-full flex items-center overflow-hidden pointer-events-none select-none';
+        contentBox.className = 'w-full h-full flex items-center justify-center overflow-hidden pointer-events-none select-none';
 
         if (el.type === 'text') {
           const textDiv = document.createElement('div');
@@ -1292,6 +1473,9 @@
           img.style.objectFit = 'contain';
           img.style.margin = 'auto';
           contentBox.appendChild(img);
+        } else if (el.type === 'stamp') {
+          const stampDiv = renderSingleStampDOM(el, false);
+          contentBox.appendChild(stampDiv);
         }
 
         dom.appendChild(contentBox);
@@ -1300,13 +1484,71 @@
       });
     }
 
-    // 渲染 10 種精美面板邊框 (同時套用於正面 70mm 與背面 70mm)
+    function renderSingleStampDOM(el, isPrintOrPreview = false, record = null) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'w-full h-full flex items-center justify-center box-border select-none';
+      
+      const stampColor = el.color || '#dc2626';
+      wrapper.style.borderColor = stampColor;
+
+      if (el.shape === 'circle' || el.shape === 'double_circle' || el.shape === 'badge') {
+        wrapper.style.borderRadius = '9999px';
+      } else if (el.shape === 'rounded') {
+        wrapper.style.borderRadius = isPrintOrPreview ? '2mm' : '7px';
+      } else {
+        wrapper.style.borderRadius = '1px';
+      }
+
+      const bStyle = el.borderStyle || 'solid';
+      if (bStyle === 'none') {
+        wrapper.style.border = 'none';
+      } else if (bStyle === 'double' || el.shape === 'double_circle') {
+        wrapper.style.border = isPrintOrPreview ? '0.8mm double ' + stampColor : '3px double ' + stampColor;
+      } else if (bStyle === 'dashed') {
+        wrapper.style.border = isPrintOrPreview ? '0.4mm dashed ' + stampColor : '1.5px dashed ' + stampColor;
+      } else {
+        wrapper.style.border = isPrintOrPreview ? '0.5mm solid ' + stampColor : '2px solid ' + stampColor;
+      }
+
+      if (el.fillMode === 'solid') {
+        wrapper.style.backgroundColor = stampColor;
+        wrapper.style.color = '#ffffff';
+      } else if (el.fillMode === 'soft') {
+        wrapper.style.backgroundColor = stampColor + '18';
+        wrapper.style.color = stampColor;
+      } else {
+        wrapper.style.backgroundColor = 'transparent';
+        wrapper.style.color = stampColor;
+      }
+
+      if (el.tiltAngle && el.tiltAngle !== 0) {
+        wrapper.style.transform = `rotate(${el.tiltAngle}deg)`;
+      }
+
+      const textSpan = document.createElement('span');
+      textSpan.style.fontFamily = el.fontFamily || "'DFKai-SB', '標楷體', KaiTi, serif";
+      textSpan.style.fontSize = isPrintOrPreview ? `${el.fontSize || 12}pt` : `${(el.fontSize || 12) * 1.33}px`;
+      textSpan.style.fontWeight = 'bold';
+      textSpan.style.textAlign = 'center';
+      textSpan.style.lineHeight = '1.1';
+      textSpan.style.letterSpacing = '0.5px';
+
+      let displayTxt = el.text || '';
+      if (record) {
+        displayTxt = replaceTags(displayTxt, record);
+      }
+      textSpan.innerText = displayTxt;
+      wrapper.appendChild(textSpan);
+
+      return wrapper;
+    }
+
     function renderDecoratedBorders(container, widthMm) {
       if (state.borderStyle === 'none') return;
 
       const panels = [
-        { topMm: 2, heightMm: 66, isBack: true },   // 背面裝飾框
-        { topMm: 72, heightMm: 66, isBack: false }  // 正面裝飾框
+        { topMm: 3, heightMm: 64, isBack: true },
+        { topMm: 73, heightMm: 64, isBack: false }
       ];
 
       panels.forEach(p => {
@@ -1361,7 +1603,6 @@
       });
     }
 
-    // 綁定圖元拖曳移動與手柄縮放
     function bindElementInteractions(dom, el, brHandle) {
       dom.addEventListener('mousedown', (e) => {
         if (e.target === brHandle) return;
@@ -1401,7 +1642,6 @@
         window.addEventListener('mouseup', onMouseUp);
       });
 
-      // 右下角縮放
       brHandle.addEventListener('mousedown', (e) => {
         e.stopPropagation();
         let startX = e.clientX;
@@ -1434,7 +1674,6 @@
       });
     }
 
-    // 正面變更後，即時鏡射同步至背面
     function afterElementPropertyChange(changedEl, shouldReRenderEditor = true) {
       if (state.syncFrontBack) {
         if (changedEl.y >= 70) {
@@ -1449,7 +1688,6 @@
       renderPreview();
     }
 
-    // 計算對稱座標並同步正面元件至背面
     function syncSingleElementToBack(frontEl) {
       const curSpec = TENT_SIZES[state.currentSizeKey];
       const backId = frontEl.id.startsWith('front_') ? frontEl.id.replace('front_', 'back_') : 'back_sync_' + frontEl.id;
@@ -1460,7 +1698,6 @@
         state.elements.push(backEl);
       }
 
-      // 屬性完全同步
       backEl.type = frontEl.type;
       backEl.text = frontEl.text;
       backEl.src = frontEl.src;
@@ -1471,9 +1708,15 @@
       backEl.color = frontEl.color;
       backEl.width = frontEl.width;
       backEl.height = frontEl.height;
-      backEl.rotate180 = true; // 背面恆為 180 度翻轉
+      backEl.rotate180 = true;
 
-      // 視角對稱文字對齊：因 180 度旋轉，對面入座貴賓所視之靠左即為背面元件之靠右
+      if (frontEl.type === 'stamp') {
+        backEl.shape = frontEl.shape;
+        backEl.fillMode = frontEl.fillMode;
+        backEl.borderStyle = frontEl.borderStyle;
+        backEl.tiltAngle = frontEl.tiltAngle ? -frontEl.tiltAngle : 0;
+      }
+
       if (frontEl.align === 'left') {
         backEl.align = 'right';
       } else if (frontEl.align === 'right') {
@@ -1482,13 +1725,11 @@
         backEl.align = 'center';
       }
 
-      // 幾何對稱映射 (以對摺山摺線 70mm 為對稱軸，翻轉 180 度後的空間座標)
       backEl.x = Math.max(0, curSpec.width - frontEl.x - frontEl.width);
       const distFromFold = frontEl.y - 70;
       backEl.y = Math.max(0, 70 - distFromFold - frontEl.height);
     }
 
-    // 全域自動同步所有正面元件至背面
     function triggerAutoSyncBack(forceAll = false) {
       const frontElements = state.elements.filter(e => e.y >= 70);
       frontElements.forEach(fEl => {
@@ -1498,53 +1739,171 @@
 
     /* =================== 3. 屬性面板事件綁定 =================== */
     function setupPropertyPanel() {
-      // 刪除按鈕
-      document.getElementById('btnDeleteElement').addEventListener('click', () => {
-        if (!state.selectedElementId) return;
-        const targetId = state.selectedElementId;
-        state.elements = state.elements.filter(e => e.id !== targetId);
+      const delBtn = document.getElementById('btnDeleteElement');
+      if (delBtn) {
+        delBtn.addEventListener('click', () => {
+          if (!state.selectedElementId) return;
+          const targetId = state.selectedElementId;
+          state.elements = state.elements.filter(e => e.id !== targetId);
 
-        // 若開啟連動同步，同時清除背面對應元件
-        if (state.syncFrontBack && targetId.startsWith('front_')) {
-          const backId = targetId.replace('front_', 'back_');
-          state.elements = state.elements.filter(e => e.id !== backId);
-        }
+          if (state.syncFrontBack && targetId.startsWith('front_')) {
+            const backId = targetId.replace('front_', 'back_');
+            state.elements = state.elements.filter(e => e.id !== backId);
+          }
 
-        state.selectedElementId = null;
-        renderMasterEditor();
-        updatePropertyPanel();
-        renderPreview();
-        showToast('已刪除元件', 'info');
+          state.selectedElementId = null;
+          renderMasterEditor();
+          updatePropertyPanel();
+          renderPreview();
+          showToast('已刪除元件', 'info');
+        });
+      }
+
+      // 圖章專屬屬性監聽 (使用安全空值檢查)
+      const pShape = document.getElementById('propStampShape');
+      if (pShape) {
+        pShape.addEventListener('change', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'stamp') {
+            el.shape = e.target.value;
+            if (el.shape === 'double_circle') {
+              el.borderStyle = 'double';
+              const pB = document.getElementById('propStampBorder');
+              if (pB) pB.value = 'double';
+            }
+            afterElementPropertyChange(el);
+          }
+        });
+      }
+
+      const pSText = document.getElementById('propStampText');
+      if (pSText) {
+        pSText.addEventListener('input', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'stamp') {
+            el.text = e.target.value;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
+
+      const pSFill = document.getElementById('propStampFill');
+      if (pSFill) {
+        pSFill.addEventListener('change', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'stamp') {
+            el.fillMode = e.target.value;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
+
+      const pSBorder = document.getElementById('propStampBorder');
+      if (pSBorder) {
+        pSBorder.addEventListener('change', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'stamp') {
+            el.borderStyle = e.target.value;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
+
+      const pSTilt = document.getElementById('propStampTilt');
+      if (pSTilt) {
+        pSTilt.addEventListener('change', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'stamp') {
+            el.tiltAngle = parseFloat(e.target.value) || 0;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
+
+      const pSSize = document.getElementById('propStampFontSize');
+      if (pSSize) {
+        pSSize.addEventListener('input', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'stamp') {
+            el.fontSize = parseFloat(e.target.value) || 12;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
+
+      const pSFont = document.getElementById('propStampFontFamily');
+      if (pSFont) {
+        pSFont.addEventListener('change', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'stamp') {
+            el.fontFamily = e.target.value;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
+
+      document.querySelectorAll('.btn-stamp-color').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const el = getSelectedElement();
+          if (el && el.type === 'stamp') {
+            const c = btn.getAttribute('data-color');
+            el.color = c;
+            const pPicker = document.getElementById('propStampColorPicker');
+            const pCode = document.getElementById('propStampColorCode');
+            if (pPicker) pPicker.value = c;
+            if (pCode) pCode.innerText = c;
+            afterElementPropertyChange(el);
+          }
+        });
       });
 
-      // 文字內容變更
-      document.getElementById('propTextInput').addEventListener('input', (e) => {
-        const el = getSelectedElement();
-        if (el && el.type === 'text') {
-          el.text = e.target.value;
-          afterElementPropertyChange(el);
-        }
-      });
+      const pSColorPicker = document.getElementById('propStampColorPicker');
+      if (pSColorPicker) {
+        pSColorPicker.addEventListener('input', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'stamp') {
+            el.color = e.target.value;
+            const pCode = document.getElementById('propStampColorCode');
+            if (pCode) pCode.innerText = e.target.value;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
 
-      // 旋轉 180 度開關
-      document.getElementById('propTextRotate180').addEventListener('change', (e) => {
-        const el = getSelectedElement();
-        if (el) {
-          el.rotate180 = e.target.checked;
-          afterElementPropertyChange(el);
-        }
-      });
+      // 文字專屬控制項
+      const pTextInput = document.getElementById('propTextInput');
+      if (pTextInput) {
+        pTextInput.addEventListener('input', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'text') {
+            el.text = e.target.value;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
 
-      // 字型選擇
-      document.getElementById('propFontFamily').addEventListener('change', (e) => {
-        const el = getSelectedElement();
-        if (el && el.type === 'text') {
-          el.fontFamily = e.target.value;
-          afterElementPropertyChange(el);
-        }
-      });
+      const pTextRot = document.getElementById('propTextRotate180');
+      if (pTextRot) {
+        pTextRot.addEventListener('change', (e) => {
+          const el = getSelectedElement();
+          if (el) {
+            el.rotate180 = e.target.checked;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
 
-      // 自訂字型上傳 (.ttf / .otf / .woff / .woff2)
+      const pFontFam = document.getElementById('propFontFamily');
+      if (pFontFam) {
+        pFontFam.addEventListener('change', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'text') {
+            el.fontFamily = e.target.value;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
+
       const fontUploadInput = document.getElementById('propCustomFontUpload');
       if (fontUploadInput) {
         fontUploadInput.addEventListener('change', async (e) => {
@@ -1591,54 +1950,65 @@
         });
       }
 
-      // 字體大小
-      document.getElementById('propTextSize').addEventListener('input', (e) => {
-        const el = getSelectedElement();
-        if (el && el.type === 'text') {
-          el.fontSize = parseFloat(e.target.value) || 12;
-          afterElementPropertyChange(el);
-        }
-      });
-
-      // 粗體
-      document.getElementById('propTextBold').addEventListener('change', (e) => {
-        const el = getSelectedElement();
-        if (el && el.type === 'text') {
-          el.bold = e.target.checked;
-          afterElementPropertyChange(el);
-        }
-      });
-
-      // 底線
-      document.getElementById('propTextUnderline').addEventListener('change', (e) => {
-        const el = getSelectedElement();
-        if (el && el.type === 'text') {
-          el.underline = e.target.checked;
-          afterElementPropertyChange(el);
-        }
-      });
-
-      // 顏色
-      document.getElementById('propTextColor').addEventListener('input', (e) => {
-        const el = getSelectedElement();
-        if (el && el.type === 'text') {
-          el.color = e.target.value;
-          document.getElementById('propTextColorCode').innerText = e.target.value;
-          afterElementPropertyChange(el);
-        }
-      });
-
-      // 手動微調 X, Y, 寬, 高
-      ['propPosX', 'propPosY', 'propWidth', 'propHeight'].forEach(id => {
-        document.getElementById(id).addEventListener('input', () => {
+      const pTSize = document.getElementById('propTextSize');
+      if (pTSize) {
+        pTSize.addEventListener('input', (e) => {
           const el = getSelectedElement();
-          if (!el) return;
-          el.x = parseFloat(document.getElementById('propPosX').value) || 0;
-          el.y = parseFloat(document.getElementById('propPosY').value) || 0;
-          el.width = parseFloat(document.getElementById('propWidth').value) || 10;
-          el.height = parseFloat(document.getElementById('propHeight').value) || 5;
-          afterElementPropertyChange(el);
+          if (el && el.type === 'text') {
+            el.fontSize = parseFloat(e.target.value) || 12;
+            afterElementPropertyChange(el);
+          }
         });
+      }
+
+      const pTBold = document.getElementById('propTextBold');
+      if (pTBold) {
+        pTBold.addEventListener('change', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'text') {
+            el.bold = e.target.checked;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
+
+      const pTUnder = document.getElementById('propTextUnderline');
+      if (pTUnder) {
+        pTUnder.addEventListener('change', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'text') {
+            el.underline = e.target.checked;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
+
+      const pTColor = document.getElementById('propTextColor');
+      if (pTColor) {
+        pTColor.addEventListener('input', (e) => {
+          const el = getSelectedElement();
+          if (el && el.type === 'text') {
+            el.color = e.target.value;
+            const pCode = document.getElementById('propTextColorCode');
+            if (pCode) pCode.innerText = e.target.value;
+            afterElementPropertyChange(el);
+          }
+        });
+      }
+
+      ['propPosX', 'propPosY', 'propWidth', 'propHeight'].forEach(id => {
+        const inp = document.getElementById(id);
+        if (inp) {
+          inp.addEventListener('input', () => {
+            const el = getSelectedElement();
+            if (!el) return;
+            el.x = parseFloat(document.getElementById('propPosX').value) || 0;
+            el.y = parseFloat(document.getElementById('propPosY').value) || 0;
+            el.width = parseFloat(document.getElementById('propWidth').value) || 10;
+            el.height = parseFloat(document.getElementById('propHeight').value) || 5;
+            afterElementPropertyChange(el);
+          });
+        }
       });
     }
 
@@ -1677,13 +2047,17 @@
       const el = getSelectedElement();
       const hint = document.getElementById('noElementHint');
       const textGroup = document.getElementById('propTextGroup');
+      const stampGroup = document.getElementById('propStampGroup');
       const geoGroup = document.getElementById('propGeometryGroup');
       const titleSpan = document.getElementById('propPanelTitle');
       const delBtn = document.getElementById('btnDeleteElement');
 
+      if (!hint || !textGroup || !stampGroup || !geoGroup || !delBtn || !titleSpan) return;
+
       if (!el) {
         hint.classList.remove('hidden');
         textGroup.classList.add('hidden');
+        stampGroup.classList.add('hidden');
         geoGroup.classList.add('hidden');
         delBtn.classList.add('hidden');
         titleSpan.innerText = '元件屬性編輯 (尚未選取元件)';
@@ -1697,6 +2071,7 @@
 
       if (el.type === 'text') {
         textGroup.classList.remove('hidden');
+        stampGroup.classList.add('hidden');
         titleSpan.innerText = `編輯：文字 (${el.y < 70 ? '背面' : '正面'})`;
         document.getElementById('propTextInput').value = el.text;
         document.getElementById('propTextSize').value = el.fontSize;
@@ -1707,8 +2082,22 @@
         document.getElementById('propTextRotate180').checked = !!el.rotate180;
         document.getElementById('propFontFamily').value = el.fontFamily || "'DFKai-SB', '標楷體', KaiTi, serif";
         updateTextAlignButtons(el.align || 'center');
+      } else if (el.type === 'stamp') {
+        textGroup.classList.add('hidden');
+        stampGroup.classList.remove('hidden');
+        titleSpan.innerText = `編輯：圖章印記 (${el.y < 70 ? '背面' : '正面'})`;
+        document.getElementById('propStampShape').value = el.shape || 'circle';
+        document.getElementById('propStampText').value = el.text || '';
+        document.getElementById('propStampFill').value = el.fillMode || 'transparent';
+        document.getElementById('propStampBorder').value = el.borderStyle || 'solid';
+        document.getElementById('propStampTilt').value = el.tiltAngle !== undefined ? String(el.tiltAngle) : '0';
+        document.getElementById('propStampColorPicker').value = el.color || '#dc2626';
+        document.getElementById('propStampColorCode').innerText = el.color || '#dc2626';
+        document.getElementById('propStampFontSize').value = el.fontSize || 12;
+        document.getElementById('propStampFontFamily').value = el.fontFamily || "'DFKai-SB', '標楷體', KaiTi, serif";
       } else {
         textGroup.classList.add('hidden');
+        stampGroup.classList.add('hidden');
         titleSpan.innerText = `編輯：圖片 (${el.y < 70 ? '背面' : '正面'})`;
       }
     }
@@ -1716,10 +2105,14 @@
     function syncGeometryInputs() {
       const el = getSelectedElement();
       if (!el) return;
-      document.getElementById('propPosX').value = el.x;
-      document.getElementById('propPosY').value = el.y;
-      document.getElementById('propWidth').value = el.width;
-      document.getElementById('propHeight').value = el.height;
+      const xIn = document.getElementById('propPosX');
+      const yIn = document.getElementById('propPosY');
+      const wIn = document.getElementById('propWidth');
+      const hIn = document.getElementById('propHeight');
+      if (xIn) xIn.value = el.x;
+      if (yIn) yIn.value = el.y;
+      if (wIn) wIn.value = el.width;
+      if (hIn) hIn.value = el.height;
     }
 
     /* =================== 4. Excel 資料庫匯入與管理 =================== */
@@ -1727,41 +2120,49 @@
       const dropZone = document.getElementById('dropZone');
       const fileInput = document.getElementById('excelFileInput');
 
-      dropZone.addEventListener('click', () => fileInput.click());
+      if (dropZone && fileInput) {
+        dropZone.addEventListener('click', () => fileInput.click());
 
-      dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('border-indigo-600', 'bg-indigo-100/50');
-      });
-      dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('border-indigo-600', 'bg-indigo-100/50');
-      });
-      dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('border-indigo-600', 'bg-indigo-100/50');
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-          handleExcelFile(e.dataTransfer.files[0]);
-        }
-      });
-      fileInput.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files.length > 0) {
-          handleExcelFile(e.target.files[0]);
-        }
-      });
+        dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropZone.classList.add('border-indigo-600', 'bg-indigo-100/50');
+        });
+        dropZone.addEventListener('dragleave', () => {
+          dropZone.classList.remove('border-indigo-600', 'bg-indigo-100/50');
+        });
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('border-indigo-600', 'bg-indigo-100/50');
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleExcelFile(e.dataTransfer.files[0]);
+          }
+        });
+        fileInput.addEventListener('change', (e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            handleExcelFile(e.target.files[0]);
+          }
+        });
+      }
 
-      document.getElementById('btnLoadSample').addEventListener('click', () => {
-        loadDataRecords(SAMPLE_RECORDS);
-        showToast('已載入 6 筆貴賓示範名單！', 'success');
-      });
+      const btnLoad = document.getElementById('btnLoadSample');
+      if (btnLoad) {
+        btnLoad.addEventListener('click', () => {
+          loadDataRecords(SAMPLE_RECORDS);
+          showToast('已載入 6 筆貴賓示範名單！', 'success');
+        });
+      }
 
-      document.getElementById('btnClearData').addEventListener('click', () => {
-        state.data = [];
-        state.fields = [];
-        updateDataViews();
-        calculatePagination();
-        renderPreview();
-        showToast('名單已清空', 'info');
-      });
+      const btnClear = document.getElementById('btnClearData');
+      if (btnClear) {
+        btnClear.addEventListener('click', () => {
+          state.data = [];
+          state.fields = [];
+          updateDataViews();
+          calculatePagination();
+          renderPreview();
+          showToast('名單已清空', 'info');
+        });
+      }
     }
 
     function handleExcelFile(file) {
@@ -1797,28 +2198,33 @@
 
     function updateDataViews() {
       const chipsContainer = document.getElementById('chipsContainer');
-      chipsContainer.innerHTML = '';
-      if (state.fields.length === 0) {
-        chipsContainer.innerHTML = '<span class="text-xs text-slate-400 italic">尚無欄位標籤</span>';
-      } else {
-        state.fields.forEach(f => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded font-mono transition';
-          btn.innerText = `{${f}}`;
-          btn.addEventListener('click', () => {
-            copyTextToClipboard(`{${f}}`);
-            showToast(`已複製變數標籤 {${f}}`, 'info');
+      if (chipsContainer) {
+        chipsContainer.innerHTML = '';
+        if (state.fields.length === 0) {
+          chipsContainer.innerHTML = '<span class="text-xs text-slate-400 italic">尚無欄位標籤</span>';
+        } else {
+          state.fields.forEach(f => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded font-mono transition';
+            btn.innerText = `{${f}}`;
+            btn.addEventListener('click', () => {
+              copyTextToClipboard(`{${f}}`);
+              showToast(`已複製變數標籤 {${f}}`, 'info');
+            });
+            chipsContainer.appendChild(btn);
           });
-          chipsContainer.appendChild(btn);
-        });
+        }
       }
 
-      document.getElementById('dataCountBadge').innerText = state.data.length;
-      document.getElementById('recordCountText').innerText = state.data.length;
+      const countBadge = document.getElementById('dataCountBadge');
+      if (countBadge) countBadge.innerText = state.data.length;
+      const recText = document.getElementById('recordCountText');
+      if (recText) recText.innerText = state.data.length;
 
       const thead = document.getElementById('dataTableHead');
       const tbody = document.getElementById('dataTableBody');
+      if (!thead || !tbody) return;
 
       if (state.data.length === 0) {
         thead.innerHTML = '<tr><th class="p-2">#</th><th class="p-2">狀態</th></tr>';
@@ -1850,120 +2256,128 @@
 
     /* =================== 5. 專案備份匯出與匯入功能 =================== */
     function setupBackupHandlers() {
-      // 匯出備份 (.json)
       const btnExport = document.getElementById('btnExportBackup');
-      btnExport.addEventListener('click', () => {
-        const backupData = {
-          version: '1.2',
-          exportedAt: new Date().toISOString(),
-          appName: 'A字三角立牌製作機',
-          currentSizeKey: state.currentSizeKey,
-          bgColor: state.bgColor,
-          borderStyle: state.borderStyle,
-          showFoldLine: state.showFoldLine,
-          showCutBorder: state.showCutBorder,
-          offsetX: state.offsetX,
-          offsetY: state.offsetY,
-          syncFrontBack: state.syncFrontBack,
-          elements: state.elements,
-          data: state.data
-        };
+      if (btnExport) {
+        btnExport.addEventListener('click', () => {
+          const backupData = {
+            version: '1.3',
+            exportedAt: new Date().toISOString(),
+            appName: 'A字三角立牌製作機',
+            currentSizeKey: state.currentSizeKey,
+            bgColor: state.bgColor,
+            borderStyle: state.borderStyle,
+            showFoldLine: state.showFoldLine,
+            showCutBorder: state.showCutBorder,
+            offsetX: state.offsetX,
+            offsetY: state.offsetY,
+            syncFrontBack: state.syncFrontBack,
+            elements: state.elements,
+            data: state.data
+          };
 
-        const jsonStr = JSON.stringify(backupData, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        const dateStr = new Date().toISOString().slice(0, 10);
-        a.href = url;
-        a.download = `三角立牌備份_${TENT_SIZES[state.currentSizeKey].name.slice(0, 4)}_${dateStr}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+          const jsonStr = JSON.stringify(backupData, null, 2);
+          const blob = new Blob([jsonStr], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          const dateStr = new Date().toISOString().slice(0, 10);
+          a.href = url;
+          a.download = `三角立牌備份_${TENT_SIZES[state.currentSizeKey].name.slice(0, 4)}_${dateStr}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
 
-        showToast('專案版面與名單備份已成功匯出！', 'success');
-      });
+          showToast('專案版面與名單備份已成功匯出！', 'success');
+        });
+      }
 
-      // 匯入備份 (.json)
       const inputImport = document.getElementById('inputImportBackup');
-      inputImport.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+      if (inputImport) {
+        inputImport.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const imported = JSON.parse(event.target.result);
-            if (!imported.elements || !Array.isArray(imported.elements)) {
-              showToast('備份檔案格式不正確，缺少元件資料！', 'error');
-              return;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            try {
+              const imported = JSON.parse(event.target.result);
+              if (!imported.elements || !Array.isArray(imported.elements)) {
+                showToast('備份檔案格式不正確，缺少元件資料！', 'error');
+                return;
+              }
+
+              if (imported.currentSizeKey && TENT_SIZES[imported.currentSizeKey]) {
+                state.currentSizeKey = imported.currentSizeKey;
+                const radio = document.querySelector(`input[name="tentSizePreset"][value="${imported.currentSizeKey}"]`);
+                if (radio) radio.checked = true;
+              }
+
+              if (imported.bgColor) {
+                state.bgColor = imported.bgColor;
+                const cPick = document.getElementById('customColorPicker');
+                if (cPick) cPick.value = imported.bgColor;
+              }
+
+              if (imported.borderStyle) {
+                state.borderStyle = imported.borderStyle;
+                const bSel = document.getElementById('selectBorderStyle');
+                if (bSel) bSel.value = imported.borderStyle;
+              }
+
+              if (typeof imported.showFoldLine === 'boolean') {
+                state.showFoldLine = imported.showFoldLine;
+                const fChk = document.getElementById('chkPrintFoldLine');
+                if (fChk) fChk.checked = imported.showFoldLine;
+              }
+
+              if (typeof imported.showCutBorder === 'boolean') {
+                state.showCutBorder = imported.showCutBorder;
+                const cChk = document.getElementById('chkPrintCutLine');
+                if (cChk) cChk.checked = imported.showCutBorder;
+              }
+
+              if (typeof imported.offsetX === 'number') {
+                state.offsetX = imported.offsetX;
+                const oX = document.getElementById('inputOffsetX');
+                if (oX) oX.value = imported.offsetX;
+              }
+
+              if (typeof imported.offsetY === 'number') {
+                state.offsetY = imported.offsetY;
+                const oY = document.getElementById('inputOffsetY');
+                if (oY) oY.value = imported.offsetY;
+              }
+
+              if (typeof imported.syncFrontBack === 'boolean') {
+                state.syncFrontBack = imported.syncFrontBack;
+                const sChk = document.getElementById('chkSyncFrontBack');
+                if (sChk) sChk.checked = imported.syncFrontBack;
+              }
+
+              state.elements = imported.elements;
+              state.selectedElementId = state.elements[0]?.id || null;
+
+              if (Array.isArray(imported.data)) {
+                loadDataRecords(imported.data);
+              }
+
+              updateSizeOptionStyles();
+              renderPastelPaletteButtons();
+              fitMasterCanvas();
+              renderMasterEditor();
+              updatePropertyPanel();
+              renderPreview();
+
+              showToast('專案備份資料已成功載入還原！', 'success');
+            } catch (err) {
+              console.error('Backup import error:', err);
+              showToast('解析備份檔案失敗，請確認是否為合法的 JSON 檔！', 'error');
             }
-
-            // 還原狀態
-            if (imported.currentSizeKey && TENT_SIZES[imported.currentSizeKey]) {
-              state.currentSizeKey = imported.currentSizeKey;
-              const radio = document.querySelector(`input[name="tentSizePreset"][value="${imported.currentSizeKey}"]`);
-              if (radio) radio.checked = true;
-            }
-
-            if (imported.bgColor) {
-              state.bgColor = imported.bgColor;
-              document.getElementById('customColorPicker').value = imported.bgColor;
-            }
-
-            if (imported.borderStyle) {
-              state.borderStyle = imported.borderStyle;
-              document.getElementById('selectBorderStyle').value = imported.borderStyle;
-            }
-
-            if (typeof imported.showFoldLine === 'boolean') {
-              state.showFoldLine = imported.showFoldLine;
-              document.getElementById('chkPrintFoldLine').checked = imported.showFoldLine;
-            }
-
-            if (typeof imported.showCutBorder === 'boolean') {
-              state.showCutBorder = imported.showCutBorder;
-              document.getElementById('chkPrintCutLine').checked = imported.showCutBorder;
-            }
-
-            if (typeof imported.offsetX === 'number') {
-              state.offsetX = imported.offsetX;
-              document.getElementById('inputOffsetX').value = imported.offsetX;
-            }
-
-            if (typeof imported.offsetY === 'number') {
-              state.offsetY = imported.offsetY;
-              document.getElementById('inputOffsetY').value = imported.offsetY;
-            }
-
-            if (typeof imported.syncFrontBack === 'boolean') {
-              state.syncFrontBack = imported.syncFrontBack;
-              document.getElementById('chkSyncFrontBack').checked = imported.syncFrontBack;
-            }
-
-            state.elements = imported.elements;
-            state.selectedElementId = state.elements[0]?.id || null;
-
-            if (Array.isArray(imported.data)) {
-              loadDataRecords(imported.data);
-            }
-
-            updateSizeOptionStyles();
-            renderPastelPaletteButtons();
-            fitMasterCanvas();
-            renderMasterEditor();
-            updatePropertyPanel();
-            renderPreview();
-
-            showToast('專案備份資料已成功載入還原！', 'success');
-          } catch (err) {
-            console.error('Backup import error:', err);
-            showToast('解析備份檔案失敗，請確認是否為合法的 JSON 檔！', 'error');
-          }
-        };
-        reader.readAsText(file);
-        e.target.value = '';
-      });
+          };
+          reader.readAsText(file);
+          e.target.value = '';
+        });
+      }
     }
 
     /* =================== 6. A4 雙立牌渲染與分頁控制 =================== */
@@ -1974,9 +2388,12 @@
       state.totalPages = Math.max(1, Math.ceil(count / TENTS_PER_PAGE));
       if (state.currentPage > state.totalPages) state.currentPage = state.totalPages;
 
-      document.getElementById('curPageNum').innerText = state.currentPage;
-      document.getElementById('totalPageNum').innerText = state.totalPages;
-      document.getElementById('pageInfoText').innerText = `1 張 A4 列印 2 個立牌 • 名單共 ${state.data.length} 筆 • 預計列印 ${state.totalPages} 頁 A4`;
+      const curP = document.getElementById('curPageNum');
+      if (curP) curP.innerText = state.currentPage;
+      const totP = document.getElementById('totalPageNum');
+      if (totP) totP.innerText = state.totalPages;
+      const pInfo = document.getElementById('pageInfoText');
+      if (pInfo) pInfo.innerText = `1 張 A4 列印 2 個立牌 • 名單共 ${state.data.length} 筆 • 預計列印 ${state.totalPages} 頁 A4`;
     }
 
     function setupZoomAndNavigation() {
@@ -1985,40 +2402,61 @@
 
       const applyPreviewZoom = (z) => {
         state.zoom = Math.min(Math.max(0.3, z), 1.8);
-        zoomWrapper.style.transform = `scale(${state.zoom})`;
-        zoomText.innerText = `${Math.round(state.zoom * 100)}%`;
+        if (zoomWrapper) zoomWrapper.style.transform = `scale(${state.zoom})`;
+        if (zoomText) zoomText.innerText = `${Math.round(state.zoom * 100)}%`;
       };
 
-      document.getElementById('btnZoomIn').addEventListener('click', () => applyPreviewZoom(state.zoom + 0.1));
-      document.getElementById('btnZoomOut').addEventListener('click', () => applyPreviewZoom(state.zoom - 0.1));
-      document.getElementById('btnZoomFit').addEventListener('click', () => {
-        const parentW = zoomWrapper.parentElement.clientWidth - 40;
-        applyPreviewZoom(parentW / 794);
-      });
+      const btnZIn = document.getElementById('btnZoomIn');
+      if (btnZIn) btnZIn.addEventListener('click', () => applyPreviewZoom(state.zoom + 0.1));
 
-      document.getElementById('btnPrevPage').addEventListener('click', () => {
-        if (state.currentPage > 1) {
-          state.currentPage--;
-          document.getElementById('curPageNum').innerText = state.currentPage;
-          renderPreview();
-        }
-      });
-      document.getElementById('btnNextPage').addEventListener('click', () => {
-        if (state.currentPage < state.totalPages) {
-          state.currentPage++;
-          document.getElementById('curPageNum').innerText = state.currentPage;
-          renderPreview();
-        }
-      });
+      const btnZOut = document.getElementById('btnZoomOut');
+      if (btnZOut) btnZOut.addEventListener('click', () => applyPreviewZoom(state.zoom - 0.1));
 
-      document.getElementById('btnPrint').addEventListener('click', () => {
-        prepareAndPrintAllPages();
-      });
+      const btnZFit = document.getElementById('btnZoomFit');
+      if (btnZFit) {
+        btnZFit.addEventListener('click', () => {
+          if (zoomWrapper && zoomWrapper.parentElement) {
+            const parentW = zoomWrapper.parentElement.clientWidth - 40;
+            applyPreviewZoom(parentW / 794);
+          }
+        });
+      }
+
+      const btnPrev = document.getElementById('btnPrevPage');
+      if (btnPrev) {
+        btnPrev.addEventListener('click', () => {
+          if (state.currentPage > 1) {
+            state.currentPage--;
+            const curP = document.getElementById('curPageNum');
+            if (curP) curP.innerText = state.currentPage;
+            renderPreview();
+          }
+        });
+      }
+
+      const btnNext = document.getElementById('btnNextPage');
+      if (btnNext) {
+        btnNext.addEventListener('click', () => {
+          if (state.currentPage < state.totalPages) {
+            state.currentPage++;
+            const curP = document.getElementById('curPageNum');
+            if (curP) curP.innerText = state.currentPage;
+            renderPreview();
+          }
+        });
+      }
+
+      const btnPrn = document.getElementById('btnPrint');
+      if (btnPrn) {
+        btnPrn.addEventListener('click', () => {
+          prepareAndPrintAllPages();
+        });
+      }
     }
 
-    // 渲染 A4 預覽畫布 (精準 210 × 297 mm, 容納 2 個 140mm 高立牌)
     function renderPreview() {
       const canvas = document.getElementById('a4PreviewCanvas');
+      if (!canvas) return;
       canvas.innerHTML = '';
 
       const curSpec = TENT_SIZES[state.currentSizeKey];
@@ -2026,8 +2464,8 @@
 
       const leftMm = ((210 - curSpec.width) / 2) + state.offsetX;
       const topTents = [
-        8.5 + state.offsetY,       // 第一座立牌頂部
-        148.5 + state.offsetY      // 第二座立牌頂部
+        8.5 + state.offsetY,
+        148.5 + state.offsetY
       ];
 
       for (let i = 0; i < TENTS_PER_PAGE; i++) {
@@ -2041,7 +2479,6 @@
       }
     }
 
-    // 建立單座三角立牌完整 DOM 元件 (展開長度 × 140mm)
     function createSingleTentCardElement(spec, record, leftMm, topMm) {
       const box = document.createElement('div');
       box.style.position = 'absolute';
@@ -2053,12 +2490,10 @@
       box.style.boxSizing = 'border-box';
       box.style.overflow = 'hidden';
 
-      // 裁切實線
       if (state.showCutBorder) {
         box.style.outline = '0.3mm solid #94a3b8';
       }
 
-      // 空白立牌格
       if (!record) {
         box.style.backgroundColor = '#f8fafc';
         box.innerHTML = `
@@ -2069,22 +2504,20 @@
         return box;
       }
 
-      // 面板裝飾邊框
       renderDecoratedBorders(box, spec.width);
 
-      // 中央對摺山摺線 (70mm)
       if (state.showFoldLine) {
         const foldLine = document.createElement('div');
         foldLine.style.position = 'absolute';
         foldLine.style.left = '0';
         foldLine.style.top = '70mm';
         foldLine.style.width = '100%';
+        foldLine.style.height = '0';
         foldLine.style.borderTop = '0.3mm dashed #cbd5e1';
         foldLine.style.zIndex = '5';
         box.appendChild(foldLine);
       }
 
-      // 渲染所有圖元並替換變數
       state.elements.forEach(el => {
         const item = document.createElement('div');
         item.style.position = 'absolute';
@@ -2123,6 +2556,9 @@
           img.style.objectFit = 'contain';
           img.style.margin = 'auto';
           inner.appendChild(img);
+        } else if (el.type === 'stamp') {
+          const stampNode = renderSingleStampDOM(el, true, record);
+          inner.appendChild(stampNode);
         }
 
         item.appendChild(inner);
@@ -2135,6 +2571,7 @@
     /* =================== 7. 列印輸出與輔助函式 =================== */
     function prepareAndPrintAllPages() {
       const printContainer = document.getElementById('printContainer');
+      if (!printContainer) return;
       printContainer.innerHTML = '';
 
       const curSpec = TENT_SIZES[state.currentSizeKey];
