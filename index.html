@@ -1,0 +1,2231 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A字三角立牌製作機 - 雙面同步桌牌套印系統</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
+    body {
+      font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+    }
+    
+    .code-font {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* 畫布透明棋盤背景 */
+    .canvas-bg-pattern {
+      background-color: #f1f5f9;
+      background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%), 
+                        linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #e2e8f0 75%), 
+                        linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    }
+
+    /* 編輯器可互動元件 */
+    .designer-element {
+      position: absolute;
+      cursor: move;
+      box-sizing: border-box;
+      border: 1px dashed transparent;
+      transition: border-color 0.15s;
+    }
+    .designer-element:hover {
+      border-color: #6366f1;
+    }
+    .designer-element.selected {
+      border: 1.5px solid #4f46e5 !important;
+      outline: 1px solid rgba(79, 70, 229, 0.25);
+    }
+    .designer-element.is-back {
+      opacity: 0.95;
+    }
+
+    /* 拖曳縮放手柄 */
+    .resize-handle {
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      background-color: #4f46e5;
+      border: 1.5px solid #ffffff;
+      border-radius: 2px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 20;
+    }
+    .designer-element.selected .resize-handle {
+      display: block;
+    }
+    .resize-handle.br {
+      bottom: -4px;
+      right: -4px;
+      cursor: nwse-resize;
+    }
+
+    /* A4 預覽單頁陰影 */
+    .a4-preview-page {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      background-color: white;
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+      transform-origin: top center;
+      transition: transform 0.2s ease;
+    }
+
+    /* 列印專屬 CSS：精確毫米，直印 A4 */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 0 !important;
+      }
+      body {
+        background: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-page-container {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .a4-print-sheet {
+        position: relative !important;
+        width: 210mm !important;
+        height: 297mm !important;
+        page-break-after: always !important;
+        page-break-inside: avoid !important;
+        background: white !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <header class="no-print bg-slate-900 text-white shadow-md z-30 sticky top-0 px-4 py-2.5 flex items-center justify-between border-b border-slate-700 flex-wrap gap-2">
+    <div class="flex items-center space-x-3">
+      <div class="bg-indigo-600 text-white p-2 rounded-lg flex items-center justify-center shadow">
+        <i class="fa-solid fa-shapes text-lg"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-base sm:text-lg leading-tight tracking-wide flex items-center gap-2">
+          A字三角立牌製作機
+          <span class="bg-indigo-500/30 text-indigo-300 text-xs px-2 py-0.5 rounded-full border border-indigo-400/30 font-normal">雙面同步版 (1張A4印2個)</span>
+        </h1>
+        <p class="text-[11px] text-slate-400">正面/背面即時同步 • 180°自動翻轉 • 8種淡彩底色 • 10種典雅邊框 • 支援專案備份匯入匯出</p>
+      </div>
+    </div>
+
+    <!-- 頂端動作按鈕列 -->
+    <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+      <!-- 示範名單按鈕 -->
+      <button type="button" id="btnLoadSample" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+        <span>載入示範名單</span>
+      </button>
+
+      <!-- 備份匯出按鈕 -->
+      <button type="button" id="btnExportBackup" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition" title="打包下載當前版面、樣式與名單資料">
+        <i class="fa-solid fa-file-export text-sky-400"></i>
+        <span>匯出備份</span>
+      </button>
+
+      <!-- 備份匯入按鈕 -->
+      <label class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-2.5 py-1.5 rounded-md flex items-center gap-1.5 cursor-pointer transition" title="讀取先前備份的 JSON 專案設定檔">
+        <i class="fa-solid fa-file-import text-emerald-400"></i>
+        <span>匯入備份</span>
+        <input type="file" id="inputImportBackup" accept=".json" class="hidden">
+      </label>
+
+      <!-- 列印按鈕 -->
+      <button type="button" id="btnPrint" class="text-xs sm:text-sm bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium px-3.5 py-1.5 rounded-md shadow flex items-center gap-2 transition">
+        <i class="fa-solid fa-print"></i>
+        <span>立即列印 (A4 雙立牌)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主操作區：左側面板 + 右側 A4 畫布預覽 -->
+  <div class="flex-1 flex flex-col lg:flex-row overflow-hidden no-print">
+
+    <aside class="w-full lg:w-[500px] xl:w-[530px] bg-white border-r border-slate-200 flex flex-col h-[calc(100vh-58px)] shadow-sm">
+      
+      <!-- 標籤分頁列 -->
+      <div class="flex border-b border-slate-200 bg-slate-50 text-sm font-medium text-slate-600 shrink-0">
+        <button type="button" id="tabBtnFormat" class="tab-btn flex-1 py-3 px-2 border-b-2 border-indigo-600 text-indigo-600 font-bold flex items-center justify-center gap-1.5 text-xs sm:text-sm">
+          <i class="fa-solid fa-ruler-combined"></i> 1. 規格與色彩
+        </button>
+        <button type="button" id="tabBtnDesign" class="tab-btn flex-1 py-3 px-2 border-b-2 border-transparent hover:text-slate-900 flex items-center justify-center gap-1.5 text-xs sm:text-sm text-slate-500">
+          <i class="fa-solid fa-object-group text-indigo-500"></i> 2. 版面設計
+        </button>
+        <button type="button" id="tabBtnData" class="tab-btn flex-1 py-3 px-2 border-b-2 border-transparent hover:text-slate-900 flex items-center justify-center gap-1.5 text-xs sm:text-sm text-slate-500">
+          <i class="fa-solid fa-file-excel"></i> 3. 名單資料 (<span id="dataCountBadge">0</span>)
+        </button>
+      </div>
+
+      <!-- 頁籤內容區域 -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+
+        <!-- ================= 頁籤 1: 規格、色彩與邊框 ================= -->
+        <div id="tabContentFormat" class="tab-pane space-y-4">
+          
+          <!-- 3種指定尺寸切換 -->
+          <div class="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3.5 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-xs text-indigo-900 flex items-center gap-1.5">
+                <i class="fa-solid fa-layer-group text-indigo-600"></i> 立牌尺寸選擇 (單張 A4 直印容納 2 個)
+              </span>
+              <span class="text-[10px] text-indigo-600 bg-indigo-100/70 px-2 py-0.5 rounded-full font-medium">展開高固定 14cm</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <label class="border-2 border-indigo-500 bg-white rounded-lg p-2.5 cursor-pointer text-center transition flex flex-col items-center justify-center hover:shadow-sm size-option-card" data-key="size_1">
+                <input type="radio" name="tentSizePreset" value="size_1" checked class="hidden">
+                <span class="font-bold text-xs text-indigo-900">1號立牌</span>
+                <span class="text-[11px] text-slate-600 font-medium mt-0.5">11.5 × 7 cm</span>
+                <span class="text-[9px] text-slate-400 mt-0.5">底 6.5cm</span>
+              </label>
+
+              <label class="border border-slate-200 bg-white rounded-lg p-2.5 cursor-pointer text-center transition flex flex-col items-center justify-center hover:shadow-sm size-option-card" data-key="size_2">
+                <input type="radio" name="tentSizePreset" value="size_2" class="hidden">
+                <span class="font-bold text-xs text-slate-800">2號立牌</span>
+                <span class="text-[11px] text-slate-600 font-medium mt-0.5">13 × 7 cm</span>
+                <span class="text-[9px] text-slate-400 mt-0.5">底 6.5cm</span>
+              </label>
+
+              <label class="border border-slate-200 bg-white rounded-lg p-2.5 cursor-pointer text-center transition flex flex-col items-center justify-center hover:shadow-sm size-option-card" data-key="size_3">
+                <input type="radio" name="tentSizePreset" value="size_3" class="hidden">
+                <span class="font-bold text-xs text-slate-800">3號立牌</span>
+                <span class="text-[11px] text-slate-600 font-medium mt-0.5">17.5 × 7 cm</span>
+                <span class="text-[9px] text-slate-400 mt-0.5">底 6.5cm (寬版)</span>
+              </label>
+            </div>
+            <p class="text-[11px] text-indigo-700/80">
+              ※ 每座展開總高為 140mm（背面 70mm + 正面 70mm），兩座垂直共佔 280mm，精準置中於 A4 (297mm)。
+            </p>
+          </div>
+
+          <!-- 8種精選淡淺色系背景與自訂色 -->
+          <div class="border border-slate-200 rounded-xl p-3.5 space-y-2.5 bg-white">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-xs text-slate-700 flex items-center gap-1.5">
+                <i class="fa-solid fa-palette text-indigo-500"></i> 立牌底色 (精選淡淺色系)
+              </span>
+              <div class="flex items-center gap-1 text-[11px] text-slate-500">
+                <span>自選：</span>
+                <input type="color" id="customColorPicker" value="#ffffff" class="w-5 h-5 p-0 border border-slate-300 rounded cursor-pointer">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2" id="pastelPaletteContainer">
+              <!-- JS 動態生成 8 種淡淺色色票按鈕 -->
+            </div>
+          </div>
+
+          <!-- 10種立牌裝飾邊框 -->
+          <div class="border border-slate-200 rounded-xl p-3.5 space-y-2 bg-white">
+            <label class="block font-bold text-xs text-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-crop-simple text-indigo-500"></i> 立牌面板邊框裝飾 (10種樣式)：
+            </label>
+            <select id="selectBorderStyle" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 focus:ring-1 focus:ring-indigo-500">
+              <option value="none">1. 無邊框 (純淨極簡)</option>
+              <option value="thin-solid">2. 簡約極細線 (現代商務)</option>
+              <option value="double-fine">3. 典雅雙細線 (學術研討會)</option>
+              <option value="inset-border">4. 內縮精緻框 (莊重典雅)</option>
+              <option value="dashed-modern">5. 現代虛線框 (活潑俐落)</option>
+              <option value="dotted-neat">6. 細緻點狀框 (清新精巧)</option>
+              <option value="top-bottom-line">7. 上下古典飾線 (貴賓席位)</option>
+              <option value="corner-bracket">8. 四角古典花角 (尊貴榮耀)</option>
+              <option value="double-inset">9. 雙層內嵌立體框 (尊榮大器)</option>
+              <option value="champagne-gold">10. 香檳雅金框 (貴賓盛會推薦)</option>
+            </select>
+          </div>
+
+          <!-- 列印線條與邊距微調 -->
+          <div class="border border-slate-200 rounded-xl p-3.5 space-y-2 bg-white text-xs">
+            <span class="font-bold text-slate-700 block mb-1">列印標記與微調 (mm)</span>
+            <div class="space-y-1.5">
+              <label class="flex items-center gap-2 cursor-pointer text-slate-600">
+                <input type="checkbox" id="chkPrintCutLine" checked class="rounded text-indigo-600">
+                <span>印出外圍裁切實線 (方便拿美工刀裁切)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer text-slate-600">
+                <input type="checkbox" id="chkPrintFoldLine" checked class="rounded text-indigo-600">
+                <span>印出中央對摺山摺線 (淡灰色虛線，折疊基準)</span>
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+              <div>
+                <label class="text-[10px] text-slate-500 block mb-0.5">左右位移校正 (mm)</label>
+                <input type="number" id="inputOffsetX" step="0.5" value="0" class="w-full border border-slate-300 rounded px-2 py-1 text-xs">
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-500 block mb-0.5">上下位移校正 (mm)</label>
+                <input type="number" id="inputOffsetY" step="0.5" value="0" class="w-full border border-slate-300 rounded px-2 py-1 text-xs">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================= 頁籤 2: 總版面設計與同步編排 ================= -->
+        <div id="tabContentDesign" class="tab-pane hidden space-y-4">
+          
+          <!-- 同步切換列與快速對齊工具 -->
+          <div class="bg-indigo-50/80 border border-indigo-200 rounded-xl p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-xs text-indigo-950 flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="chkSyncFrontBack" checked class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500">
+                <span>正面背面即時連動同步</span>
+              </label>
+              <span class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-medium">背面自動 180° 鏡射翻轉</span>
+            </div>
+            <p class="text-[11px] text-slate-600">
+              開啟時，編輯正面（下方 70mm）的文字內容、字型、位置與大小，背面（上方 70mm）將全自動鏡射並顛倒 180°，摺成立牌後前後兩面皆為正向！
+            </p>
+          </div>
+
+          <!-- 工具箱：新增元件 -->
+          <div class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-sm">
+            <button type="button" id="btnAddText" class="flex-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-bold transition">
+              <i class="fa-solid fa-plus text-[10px]"></i> 新增文字元件
+            </button>
+            <label class="flex-1 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-bold cursor-pointer transition">
+              <i class="fa-solid fa-image text-[10px]"></i> 插入圖片/校徽
+              <input type="file" id="inputUploadImage" accept="image/*" class="hidden">
+            </label>
+            <button type="button" id="btnSyncToBackNow" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-2.5 py-1.5 rounded-lg font-medium transition" title="強制將正面覆蓋複製至背面">
+              <i class="fa-solid fa-arrows-rotate mr-1"></i> 強制同步至背面
+            </button>
+          </div>
+
+          <!-- 視覺化總版面畫布 (長度 × 14cm) -->
+          <div class="border border-slate-300 rounded-xl p-3 bg-slate-100 space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-600">
+              <span class="font-bold flex items-center gap-1.5">
+                <i class="fa-solid fa-vector-square text-indigo-500"></i>
+                <span>展開總畫布 (<span id="canvasDimLabel" class="code-font text-indigo-600 font-bold">115 × 140 mm</span>)</span>
+              </span>
+
+              <!-- 總版面自動適應與縮放控制列 -->
+              <div class="flex items-center gap-1 bg-white border border-slate-300 rounded-md px-1.5 py-0.5 shadow-sm text-xs">
+                <button type="button" id="btnCanvasAutoFit" title="自動適應視窗，完整呈現無需捲動" class="text-[10px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-1.5 py-0.5 rounded border border-indigo-200 flex items-center gap-0.5 transition">
+                  <i class="fa-solid fa-expand text-[9px]"></i> 最適
+                </button>
+                <div class="h-3 w-px bg-slate-200 mx-0.5"></div>
+                <button type="button" id="btnCanvasZoomOut" class="w-5 h-5 rounded hover:bg-slate-100 font-bold text-slate-600 flex items-center justify-center">-</button>
+                <span id="canvasZoomText" class="w-12 text-center font-mono font-bold text-[11px] text-indigo-600">最適</span>
+                <button type="button" id="btnCanvasZoomIn" class="w-5 h-5 rounded hover:bg-slate-100 font-bold text-slate-600 flex items-center justify-center">+</button>
+              </div>
+            </div>
+
+            <!-- 畫布視窗：自動適應尺寸，消除上下左右捲軸，100% 完整呈現 -->
+            <div id="masterCanvasScrollContainer" class="canvas-bg-pattern overflow-hidden p-2 rounded-lg flex items-center justify-center h-[340px] sm:h-[380px] border border-slate-200 relative select-none">
+              <!-- 縮放外框：寬高隨適應比例嚴格貼合，杜絕虛擬空白與捲軸 -->
+              <div id="canvasScalerWrapper" class="relative transition-all duration-150 ease-out flex items-center justify-center">
+                <!-- 總版面主畫布 -->
+                <div id="tentMasterCanvas" class="bg-white border border-slate-400 rounded-sm absolute top-0 left-0">
+                  <!-- 摺線區分指示器 (背面 70mm / 正面 70mm) -->
+                  <div id="canvasFoldGuide" class="absolute w-full border-b-2 border-dashed border-rose-400 pointer-events-none z-10 flex items-center justify-between px-2 text-[9px] text-rose-500 font-mono font-bold" style="top: 70mm;">
+                    <span>▲ 背面區域 (折疊時朝後，自動鏡射翻轉)</span>
+                    <span>【對摺山摺線 70mm】</span>
+                    <span>▼ 正面區域 (正向編輯主區)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
+              <span>● 雙面展開即時縮放呈現，更換規格時自動維持最佳可視比例</span>
+              <span class="text-indigo-600 font-medium">免滑動捲軸</span>
+            </div>
+          </div>
+
+          <!-- 元件屬性編輯面板 -->
+          <div id="elementPropertyPanel" class="border border-indigo-200 rounded-xl p-3 bg-indigo-50/50 space-y-2.5">
+            <div class="flex items-center justify-between border-b border-indigo-100 pb-2">
+              <span class="font-bold text-xs text-indigo-950 flex items-center gap-1.5">
+                <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
+                <span id="propPanelTitle">選取元件編輯</span>
+              </span>
+              <div class="flex items-center gap-2">
+                <button type="button" id="btnDeleteElement" class="text-xs text-rose-500 hover:text-rose-700 font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-trash-can"></i> 刪除
+                </button>
+              </div>
+            </div>
+
+            <div id="noElementHint" class="text-xs text-slate-400 py-3 text-center">
+              請在上方展開總畫布中點選任一文字或圖形進行樣式調整。
+            </div>
+
+            <!-- 文字內容與控制 -->
+            <div id="propTextGroup" class="space-y-2.5 hidden">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>文字內容 (支援 Enter 換行與 {欄位} 標籤)：</span>
+                  <span class="text-[10px] text-indigo-600">多行文字排版</span>
+                </label>
+                <textarea id="propTextInput" rows="2" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-indigo-500 leading-relaxed" placeholder="輸入文字內容"></textarea>
+              </div>
+
+              <!-- 雙層對齊工具：1. 文字區塊內部對齊  2. 元件版面位置對齊 -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white border border-indigo-100 rounded-lg p-2.5">
+                <!-- 1. 文字內部對齊 -->
+                <div class="space-y-1">
+                  <span class="text-[10px] font-bold text-slate-600 flex items-center gap-1">
+                    <i class="fa-solid fa-paragraph text-indigo-500"></i> 文字段落對齊：
+                  </span>
+                  <div class="flex items-center gap-1">
+                    <button type="button" id="btnTextAlignLeft" class="flex-1 py-1 px-1.5 rounded text-[11px] font-medium border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 flex items-center justify-center gap-1 transition" title="文字段落靠左">
+                      <i class="fa-solid fa-align-left text-[10px]"></i> 靠左
+                    </button>
+                    <button type="button" id="btnTextAlignCenter" class="flex-1 py-1 px-1.5 rounded text-[11px] font-medium border border-indigo-300 bg-indigo-600 text-white flex items-center justify-center gap-1 transition shadow-xs" title="文字段落置中">
+                      <i class="fa-solid fa-align-center text-[10px]"></i> 置中
+                    </button>
+                    <button type="button" id="btnTextAlignRight" class="flex-1 py-1 px-1.5 rounded text-[11px] font-medium border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 flex items-center justify-center gap-1 transition" title="文字段落靠右">
+                      <i class="fa-solid fa-align-right text-[10px]"></i> 靠右
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 2. 元件在立牌上的版面外框對齊 -->
+                <div class="space-y-1">
+                  <span class="text-[10px] font-bold text-slate-600 flex items-center gap-1">
+                    <i class="fa-solid fa-arrows-left-right-to-line text-indigo-500"></i> 元件版面定位：
+                  </span>
+                  <div class="flex items-center gap-1">
+                    <button type="button" id="btnAlignLeft" class="flex-1 py-1 px-1.5 rounded text-[11px] font-medium border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 flex items-center justify-center gap-1 transition" title="元件靠左貼齊">
+                      <i class="fa-solid fa-arrow-left text-[10px]"></i> 靠左
+                    </button>
+                    <button type="button" id="btnAlignCenter" class="flex-1 py-1 px-1.5 rounded text-[11px] font-medium border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 flex items-center justify-center gap-1 transition" title="元件水平置中">
+                      <i class="fa-solid fa-arrows-left-right text-[10px]"></i> 置中
+                    </button>
+                    <button type="button" id="btnAlignRight" class="flex-1 py-1 px-1.5 rounded text-[11px] font-medium border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 flex items-center justify-center gap-1 transition" title="元件靠右貼齊">
+                      <i class="fa-solid fa-arrow-right text-[10px]"></i> 靠右
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 旋轉 180 度功能開關 -->
+              <div class="bg-amber-50 border border-amber-200 rounded-lg p-2.5 flex items-center justify-between">
+                <div>
+                  <span class="font-bold text-amber-900 text-xs flex items-center gap-1">
+                    <i class="fa-solid fa-arrows-rotate"></i> 顛倒翻轉 180 度 (背面專用)
+                  </span>
+                  <p class="text-[10px] text-amber-700">放置在上方 70mm 區域時請開啟，立起後即為正向</p>
+                </div>
+                <input type="checkbox" id="propTextRotate180" class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer">
+              </div>
+
+              <!-- 字型選擇器與自訂字型上傳 -->
+              <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                  <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                    <i class="fa-solid fa-font text-indigo-500"></i> 字型選擇：
+                  </label>
+                  <label class="text-[10px] text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded cursor-pointer flex items-center gap-1 transition">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> 上傳字型 (.ttf/.otf/.woff)
+                    <input type="file" id="propCustomFontUpload" accept=".ttf,.otf,.woff,.woff2" class="hidden">
+                  </label>
+                </div>
+                <select id="propFontFamily" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
+                  <optgroup label="推薦書法與標題字型">
+                    <option value="'DFKai-SB', '標楷體', KaiTi, BiauKai, serif">標楷體 (莊重氣派席位推薦)</option>
+                    <option value="'Noto Serif TC', serif">思源宋體 / 明體 (高雅大方)</option>
+                    <option value="'Noto Sans TC', sans-serif">思源黑體 (現代俐落)</option>
+                    <option value="'Microsoft JhengHei', '微軟正黑體', sans-serif">微軟正黑體</option>
+                  </optgroup>
+                  <optgroup label="英文字型">
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                    <option value="Arial, sans-serif">Arial</option>
+                  </optgroup>
+                  <optgroup id="optgroupCustomFonts" label="★ 自訂上傳字型" disabled>
+                    <option value="" disabled>尚未上傳字型</option>
+                  </optgroup>
+                </select>
+                <div id="customFontSuccessBadge" class="text-[10px] text-emerald-600 hidden flex items-center gap-1 font-medium pt-0.5">
+                  <i class="fa-solid fa-circle-check"></i> <span id="customFontNameLabel">已套用自訂字型</span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 pt-1">
+                <div>
+                  <label class="block text-[10px] text-slate-500 mb-0.5">字體大小 (pt)</label>
+                  <input type="number" id="propTextSize" min="8" max="96" step="1" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-500 mb-0.5">文字顏色</label>
+                  <div class="flex items-center gap-1 mt-0.5">
+                    <input type="color" id="propTextColor" class="w-6 h-6 p-0 border border-slate-300 rounded cursor-pointer">
+                    <span id="propTextColorCode" class="text-[10px] font-mono text-slate-500">#000000</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-500 mb-0.5">樣式效果</label>
+                  <div class="flex items-center gap-2 mt-1.5">
+                    <label class="text-[11px] text-slate-700 flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" id="propTextBold" class="rounded text-indigo-600"> 粗體
+                    </label>
+                    <label class="text-[11px] text-slate-700 flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" id="propTextUnderline" class="rounded text-indigo-600"> 底線
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 幾何位置與尺寸 (毫米) -->
+            <div id="propGeometryGroup" class="grid grid-cols-4 gap-2 pt-2 border-t border-indigo-100 hidden text-xs">
+              <div>
+                <label class="text-[10px] text-slate-500 block">X (mm)</label>
+                <input type="number" id="propPosX" step="0.5" class="w-full bg-white border border-slate-300 rounded px-1.5 py-0.5 text-center text-xs">
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-500 block">Y (mm)</label>
+                <input type="number" id="propPosY" step="0.5" class="w-full bg-white border border-slate-300 rounded px-1.5 py-0.5 text-center text-xs">
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-500 block">寬度 (mm)</label>
+                <input type="number" id="propWidth" step="0.5" class="w-full bg-white border border-slate-300 rounded px-1.5 py-0.5 text-center text-xs">
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-500 block">高度 (mm)</label>
+                <input type="number" id="propHeight" step="0.5" class="w-full bg-white border border-slate-300 rounded px-1.5 py-0.5 text-center text-xs">
+              </div>
+            </div>
+          </div>
+
+          <!-- 可插入之變數標籤 -->
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+              <span><i class="fa-solid fa-code text-indigo-500 mr-1"></i> 可用變數標籤 (點擊複製)</span>
+              <span class="text-[10px] text-slate-400">貼入文字中即自動套印</span>
+            </label>
+            <div id="chipsContainer" class="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
+              <!-- 動態產生變數按鈕 -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================= 頁籤 3: Excel 資料庫名單 ================= -->
+        <div id="tabContentData" class="tab-pane hidden space-y-4">
+          
+          <div id="dropZone" class="border-2 border-dashed border-indigo-300 hover:border-indigo-500 bg-indigo-50/40 rounded-xl p-5 text-center cursor-pointer transition">
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden">
+            <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-2 text-lg shadow-sm">
+              <i class="fa-solid fa-file-excel"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-xs sm:text-sm">點擊上傳或拖曳 Excel / CSV 席位名單</h3>
+            <p class="text-[11px] text-slate-500 mt-0.5">首列需為欄位名稱 (如: 單位, 職稱, 姓名, 桌號)</p>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span>名單筆數：<strong id="recordCountText" class="text-indigo-600 text-sm font-bold">0</strong> 筆</span>
+            <button type="button" id="btnClearData" class="text-rose-500 hover:text-rose-700 underline font-medium">清空名單</button>
+          </div>
+
+          <!-- 名單表格預覽 -->
+          <div class="border border-slate-200 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
+            <table class="w-full text-left text-xs border-collapse" id="dataTable">
+              <thead class="bg-slate-100 text-slate-600 sticky top-0 border-b border-slate-200" id="dataTableHead">
+                <tr><th class="p-2">#</th><th class="p-2">姓名</th><th class="p-2">單位/職稱</th></tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-700" id="dataTableBody">
+                <tr><td colspan="3" class="p-4 text-center text-slate-400">尚無資料，請點擊上方按鈕載入示範名單或上傳 Excel</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- 面板底部列印頁數摘要 -->
+      <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs flex items-center justify-between text-slate-500 shrink-0">
+        <span id="pageInfoText">單張 A4 容納 2 個立牌 • 共 0 頁</span>
+        <span class="text-indigo-600 font-medium">100% 比例輸出</span>
+      </div>
+
+    </aside>
+
+    <!-- 右側：A4 所見即所得畫布預覽區域 (每張 A4 直印 2 個立牌) -->
+    <main class="flex-1 bg-slate-200/80 overflow-auto flex flex-col items-center p-4 relative">
+      
+      <!-- 預覽工具列 -->
+      <div class="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border border-slate-300 shadow-sm rounded-full px-4 py-1.5 flex items-center gap-4 text-xs font-medium text-slate-700 mb-4">
+        <!-- 頁面切換 -->
+        <div class="flex items-center gap-2">
+          <button type="button" id="btnPrevPage" class="w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <span>第 <span id="curPageNum" class="font-bold text-indigo-600">1</span> / <span id="totalPageNum">1</span> 頁</span>
+          <button type="button" id="btnNextPage" class="w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+
+        <div class="h-4 w-px bg-slate-300"></div>
+
+        <!-- 縮放比例 -->
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+          <button type="button" id="btnZoomOut" class="w-6 h-6 rounded hover:bg-slate-100 text-slate-600 font-bold">-</button>
+          <span id="zoomLevelText" class="w-12 text-center code-font font-bold text-indigo-600">75%</span>
+          <button type="button" id="btnZoomIn" class="w-6 h-6 rounded hover:bg-slate-100 text-slate-600 font-bold">+</button>
+          <button type="button" id="btnZoomFit" class="text-[11px] bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded text-slate-600">最適</button>
+        </div>
+
+        <div class="h-4 w-px bg-slate-300"></div>
+
+        <div class="text-slate-500 hidden sm:inline-block">
+          當前規格：<span id="specLabelText" class="text-slate-800 font-bold">1號 (11.5 × 7 cm)</span>
+        </div>
+      </div>
+
+      <!-- A4 畫布可縮放視窗外框 (210mm x 297mm) -->
+      <div id="previewZoomWrapper" class="transition-transform duration-100 ease-out origin-top mb-12">
+        <div id="a4PreviewCanvas" class="a4-preview-page border border-slate-300" style="width: 210mm; height: 297mm; min-width: 210mm; min-height: 297mm;">
+          <!-- 內部動態渲染 2 個完整展開的三角立牌 (上下各一) -->
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- 列印專用隱藏容器 -->
+  <div id="printContainer" class="hidden print-page-container"></div>
+
+  <script>
+    /* =================== 1. 系統常數與規格定義 =================== */
+    // 3種指定尺寸設定 (單位: mm)
+    // 展開高統一為 140mm (背面 70mm + 正面 70mm)
+    const TENT_SIZES = {
+      size_1: {
+        name: "1號立牌 (11.5 × 7 × 6.5 cm)",
+        width: 115,
+        height: 140, // 展開總高度: 70mm (背面) + 70mm (正面)
+        foldY: 70,
+        labelWidthCm: 11.5,
+        labelHeightCm: 7.0
+      },
+      size_2: {
+        name: "2號立牌 (13 × 7 × 6.5 cm)",
+        width: 130,
+        height: 140,
+        foldY: 70,
+        labelWidthCm: 13.0,
+        labelHeightCm: 7.0
+      },
+      size_3: {
+        name: "3號立牌 (17.5 × 7 × 6.5 cm)",
+        width: 175,
+        height: 140,
+        foldY: 70,
+        labelWidthCm: 17.5,
+        labelHeightCm: 7.0
+      }
+    };
+
+    // 8 款淡淺色系色票定義
+    const PASTEL_PALETTES = [
+      { name: "純淨白", hex: "#ffffff", border: "#e2e8f0" },
+      { name: "象牙米白", hex: "#fefcf5", border: "#fde68a" },
+      { name: "晨曦鵝黃", hex: "#fffbeb", border: "#fef08a" },
+      { name: "櫻花淡粉", hex: "#fff1f2", border: "#fecdd3" },
+      { name: "典雅天藍", hex: "#f0f9ff", border: "#bae6fd" },
+      { name: "薄荷粉綠", hex: "#f0fdf4", border: "#bbf7d0" },
+      { name: "薰衣草紫", hex: "#faf5ff", border: "#e9d5ff" },
+      { name: "雅緻銀灰", hex: "#f8fafc", border: "#cbd5e1" }
+    ];
+
+    // 像素轉換基準 (1mm = 3.78px 在 96DPI 下)
+    const MM_TO_PX = 3.78;
+
+    const state = {
+      currentSizeKey: 'size_1',
+      showFoldLine: true,
+      showCutBorder: true,
+      offsetX: 0,
+      offsetY: 0,
+      zoom: 0.75,
+      canvasZoom: 1.0,
+      isAutoFit: true,
+      customFonts: [],
+      currentPage: 1,
+      totalPages: 1,
+      selectedElementId: null,
+      data: [],
+      fields: [],
+      syncFrontBack: true,
+      bgColor: '#ffffff',
+      borderStyle: 'thin-solid',
+      elements: [
+        // 正面元件 (Y: 70mm ~ 140mm)
+        {
+          id: 'front_unit',
+          type: 'text',
+          side: 'front',
+          x: 7.5,
+          y: 78,
+          width: 100,
+          height: 10,
+          text: '{單位}',
+          fontFamily: "'DFKai-SB', '標楷體', KaiTi, BiauKai, serif",
+          fontSize: 16,
+          bold: true,
+          underline: false,
+          color: '#1e293b',
+          align: 'center',
+          rotate180: false
+        },
+        {
+          id: 'front_name',
+          type: 'text',
+          side: 'front',
+          x: 7.5,
+          y: 92,
+          width: 100,
+          height: 24,
+          text: '{姓名}',
+          fontFamily: "'DFKai-SB', '標楷體', KaiTi, BiauKai, serif",
+          fontSize: 42,
+          bold: true,
+          underline: false,
+          color: '#0f172a',
+          align: 'center',
+          rotate180: false
+        },
+        {
+          id: 'front_title',
+          type: 'text',
+          side: 'front',
+          x: 7.5,
+          y: 120,
+          width: 100,
+          height: 10,
+          text: '{職稱}',
+          fontFamily: "'DFKai-SB', '標楷體', KaiTi, BiauKai, serif",
+          fontSize: 16,
+          bold: false,
+          underline: false,
+          color: '#475569',
+          align: 'center',
+          rotate180: false
+        },
+        // 背面元件 (Y: 0mm ~ 70mm, 預設 180 度翻轉鏡射)
+        {
+          id: 'back_unit',
+          type: 'text',
+          side: 'back',
+          x: 7.5,
+          y: 52,
+          width: 100,
+          height: 10,
+          text: '{單位}',
+          fontFamily: "'DFKai-SB', '標楷體', KaiTi, BiauKai, serif",
+          fontSize: 16,
+          bold: true,
+          underline: false,
+          color: '#1e293b',
+          align: 'center',
+          rotate180: true
+        },
+        {
+          id: 'back_name',
+          type: 'text',
+          side: 'back',
+          x: 7.5,
+          y: 24,
+          width: 100,
+          height: 24,
+          text: '{姓名}',
+          fontFamily: "'DFKai-SB', '標楷體', KaiTi, BiauKai, serif",
+          fontSize: 42,
+          bold: true,
+          underline: false,
+          color: '#0f172a',
+          align: 'center',
+          rotate180: true
+        },
+        {
+          id: 'back_title',
+          type: 'text',
+          side: 'back',
+          x: 7.5,
+          y: 10,
+          width: 100,
+          height: 10,
+          text: '{職稱}',
+          fontFamily: "'DFKai-SB', '標楷體', KaiTi, BiauKai, serif",
+          fontSize: 16,
+          bold: false,
+          underline: false,
+          color: '#475569',
+          align: 'center',
+          rotate180: true
+        }
+      ]
+    };
+
+    // 示範貴賓席位名單
+    const SAMPLE_RECORDS = [
+      { 姓名: '李大維', 單位: '國立臺灣師範大學', 職稱: '講座教授', 桌號: '第 1 桌' },
+      { 姓名: '陳惠芬', 單位: '新北市教育局', 職稱: '主任秘書', 桌號: '第 1 桌' },
+      { 姓名: '張明德', 單位: '家長會聯合會', 職稱: '總會長', 桌號: '第 2 桌' },
+      { 姓名: '林雅婷', 單位: '佳林國民中學', 職稱: '校長', 桌號: '第 2 桌' },
+      { 姓名: '黃文吉', 單位: '國中校長協會', 職稱: '理事長', 桌號: '第 3 桌' },
+      { 姓名: '蘇麗華', 單位: '教師會組織', 職稱: '常務理事', 桌號: '第 3 桌' }
+    ];
+
+    /* =================== 2. 系統初始化與事件綁定 =================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderPastelPaletteButtons();
+      setupTabs();
+      setupSizeSelectors();
+      setupMasterDesigner();
+      setupAlignmentControls();
+      setupPropertyPanel();
+      setupExcelImporter();
+      setupBackupHandlers();
+      setupZoomAndNavigation();
+      loadDataRecords(SAMPLE_RECORDS);
+      fitMasterCanvas();
+      renderMasterEditor();
+      renderPreview();
+    });
+
+    function renderPastelPaletteButtons() {
+      const container = document.getElementById('pastelPaletteContainer');
+      container.innerHTML = '';
+      PASTEL_PALETTES.forEach((p) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `p-1.5 rounded-lg border text-center transition flex flex-col items-center justify-center gap-1 ${state.bgColor === p.hex ? 'ring-2 ring-indigo-500 border-indigo-400 font-bold' : 'border-slate-200 hover:border-indigo-300'}`;
+        btn.style.backgroundColor = p.hex;
+        btn.innerHTML = `
+          <div class="w-4 h-4 rounded-full border border-slate-300 shadow-xs" style="background-color: ${p.hex};"></div>
+          <span class="text-[10px] text-slate-700">${p.name}</span>
+        `;
+        btn.addEventListener('click', () => {
+          state.bgColor = p.hex;
+          document.getElementById('customColorPicker').value = p.hex;
+          renderPastelPaletteButtons();
+          renderMasterEditor();
+          renderPreview();
+        });
+        container.appendChild(btn);
+      });
+
+      // 自訂顏色選擇器
+      const picker = document.getElementById('customColorPicker');
+      picker.addEventListener('input', (e) => {
+        state.bgColor = e.target.value;
+        renderPastelPaletteButtons();
+        renderMasterEditor();
+        renderPreview();
+      });
+
+      // 邊框樣式切換
+      const borderSelect = document.getElementById('selectBorderStyle');
+      borderSelect.value = state.borderStyle;
+      borderSelect.addEventListener('change', (e) => {
+        state.borderStyle = e.target.value;
+        renderMasterEditor();
+        renderPreview();
+      });
+    }
+
+    function setupTabs() {
+      const tabs = [
+        { btn: 'tabBtnFormat', content: 'tabContentFormat' },
+        { btn: 'tabBtnDesign', content: 'tabContentDesign' },
+        { btn: 'tabBtnData', content: 'tabContentData' }
+      ];
+
+      tabs.forEach(tab => {
+        const btnElem = document.getElementById(tab.btn);
+        btnElem.addEventListener('click', () => {
+          tabs.forEach(t => {
+            const b = document.getElementById(t.btn);
+            const c = document.getElementById(t.content);
+            if (t.btn === tab.btn) {
+              b.className = 'tab-btn flex-1 py-3 px-2 border-b-2 border-indigo-600 text-indigo-600 font-bold flex items-center justify-center gap-1.5';
+              c.classList.remove('hidden');
+              if (tab.btn === 'tabBtnDesign') {
+                if (!state.selectedElementId) {
+                  state.selectedElementId = 'front_name';
+                }
+                setTimeout(() => {
+                  fitMasterCanvas();
+                  renderMasterEditor();
+                  updatePropertyPanel();
+                }, 30);
+              }
+            } else {
+              b.className = 'tab-btn flex-1 py-3 px-2 border-b-2 border-transparent hover:text-slate-900 flex items-center justify-center gap-1.5 text-slate-500';
+              c.classList.add('hidden');
+            }
+          });
+        });
+      });
+    }
+
+    // 尺寸選項切換事件
+    function setupSizeSelectors() {
+      const radios = document.querySelectorAll('input[name="tentSizePreset"]');
+      radios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          state.currentSizeKey = e.target.value;
+          updateSizeOptionStyles();
+          autoAdjustElementWidths();
+          triggerAutoSyncBack();
+          fitMasterCanvas();
+          renderMasterEditor();
+          updatePropertyPanel();
+          renderPreview();
+        });
+      });
+
+      // 列印線條與位移輸入
+      document.getElementById('chkPrintFoldLine').addEventListener('change', (e) => {
+        state.showFoldLine = e.target.checked;
+        renderPreview();
+      });
+      document.getElementById('chkPrintCutLine').addEventListener('change', (e) => {
+        state.showCutBorder = e.target.checked;
+        renderPreview();
+      });
+      document.getElementById('inputOffsetX').addEventListener('input', (e) => {
+        state.offsetX = parseFloat(e.target.value) || 0;
+        renderPreview();
+      });
+      document.getElementById('inputOffsetY').addEventListener('input', (e) => {
+        state.offsetY = parseFloat(e.target.value) || 0;
+        renderPreview();
+      });
+    }
+
+    function updateSizeOptionStyles() {
+      document.querySelectorAll('.size-option-card').forEach(card => {
+        const key = card.getAttribute('data-key');
+        if (key === state.currentSizeKey) {
+          card.className = 'border-2 border-indigo-500 bg-indigo-50/40 rounded-lg p-2.5 cursor-pointer text-center transition flex flex-col items-center justify-center shadow-sm size-option-card';
+        } else {
+          card.className = 'border border-slate-200 bg-white rounded-lg p-2.5 cursor-pointer text-center transition flex flex-col items-center justify-center hover:shadow-sm size-option-card';
+        }
+      });
+      document.getElementById('canvasDimLabel').innerText = `${TENT_SIZES[state.currentSizeKey].width} × 140 mm`;
+      document.getElementById('specLabelText').innerText = TENT_SIZES[state.currentSizeKey].name;
+    }
+
+    // 當切換尺寸時，將元件寬度平移適應新尺寸
+    function autoAdjustElementWidths() {
+      const curW = TENT_SIZES[state.currentSizeKey].width;
+      state.elements.forEach(el => {
+        if (el.width > curW - 8) {
+          el.width = curW - 8;
+          el.x = 4;
+        } else if (el.x + el.width > curW - 4) {
+          el.x = Math.max(4, curW - el.width - 4);
+        }
+      });
+    }
+
+    // 自動計算並適應總畫布尺寸，確保 100% 完整顯示、無任何方向捲軸
+    function fitMasterCanvas() {
+      const container = document.getElementById('masterCanvasScrollContainer');
+      if (!container) return;
+
+      const curSpec = TENT_SIZES[state.currentSizeKey];
+      const wPx = curSpec.width * MM_TO_PX;
+      const hPx = curSpec.height * MM_TO_PX; // 140mm = 529.2px
+
+      // 取得容器內部扣除邊距之可用空間
+      const availableW = Math.max(160, container.clientWidth - 28);
+      const availableH = Math.max(160, container.clientHeight - 28);
+
+      // 以短邊為基準，計算百分之百容納比例
+      const scaleW = availableW / wPx;
+      const scaleH = availableH / hPx;
+      const bestScale = Math.min(scaleW, scaleH);
+
+      state.canvasZoom = Math.max(0.3, Math.round(bestScale * 100) / 100);
+      state.isAutoFit = true;
+      applyMasterZoom(state.canvasZoom, true);
+    }
+
+    function applyMasterZoom(z, isAuto = false) {
+      state.canvasZoom = Math.min(Math.max(0.3, Math.round(z * 100) / 100), 2.5);
+      const zoomText = document.getElementById('canvasZoomText');
+      if (zoomText) {
+        zoomText.innerText = isAuto ? '最適' : `${Math.round(state.canvasZoom * 100)}%`;
+      }
+
+      const curSpec = TENT_SIZES[state.currentSizeKey];
+      const wPx = curSpec.width * MM_TO_PX;
+      const hPx = curSpec.height * MM_TO_PX;
+
+      const scaler = document.getElementById('canvasScalerWrapper');
+      const canvas = document.getElementById('tentMasterCanvas');
+
+      if (scaler && canvas) {
+        scaler.style.width = `${wPx * state.canvasZoom}px`;
+        scaler.style.height = `${hPx * state.canvasZoom}px`;
+
+        canvas.style.width = `${wPx}px`;
+        canvas.style.height = `${hPx}px`;
+        canvas.style.transform = `scale(${state.canvasZoom})`;
+        canvas.style.transformOrigin = 'top left';
+      }
+    }
+
+    function setupMasterDesigner() {
+      // 自動最適按鈕
+      const btnAutoFit = document.getElementById('btnCanvasAutoFit');
+      if (btnAutoFit) {
+        btnAutoFit.addEventListener('click', () => {
+          fitMasterCanvas();
+          renderMasterEditor();
+        });
+      }
+
+      // 縮放按鈕
+      document.getElementById('btnCanvasZoomIn').addEventListener('click', () => {
+        state.isAutoFit = false;
+        applyMasterZoom(state.canvasZoom + 0.1, false);
+      });
+      document.getElementById('btnCanvasZoomOut').addEventListener('click', () => {
+        state.isAutoFit = false;
+        applyMasterZoom(state.canvasZoom - 0.1, false);
+      });
+
+      // 視窗大小改變時，若處於最適模式則即時重算
+      window.addEventListener('resize', () => {
+        const designTab = document.getElementById('tabContentDesign');
+        if (designTab && !designTab.classList.contains('hidden') && state.isAutoFit) {
+          fitMasterCanvas();
+        }
+      });
+
+      // 新增文字元件 (預設新增於正面下半部)
+      document.getElementById('btnAddText').addEventListener('click', () => {
+        const curW = TENT_SIZES[state.currentSizeKey].width;
+        const newEl = {
+          id: 'text_' + Date.now(),
+          type: 'text',
+          side: 'front',
+          x: Math.round((curW - 80) / 2),
+          y: 105,
+          width: 80,
+          height: 12,
+          text: '請輸入文字',
+          fontFamily: "'DFKai-SB', '標楷體', KaiTi, BiauKai, serif",
+          fontSize: 18,
+          bold: false,
+          underline: false,
+          color: '#1e293b',
+          align: 'center',
+          rotate180: false
+        };
+        state.elements.push(newEl);
+        state.selectedElementId = newEl.id;
+
+        if (state.syncFrontBack) {
+          syncSingleElementToBack(newEl);
+        }
+
+        renderMasterEditor();
+        updatePropertyPanel();
+        renderPreview();
+        showToast('已新增文字元件！', 'info');
+      });
+
+      // 插入圖片 (校徽/圖示)
+      document.getElementById('inputUploadImage').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const curW = TENT_SIZES[state.currentSizeKey].width;
+          const newEl = {
+            id: 'img_' + Date.now(),
+            type: 'image',
+            side: 'front',
+            x: Math.round((curW - 20) / 2),
+            y: 72,
+            width: 20,
+            height: 20,
+            src: evt.target.result,
+            rotate180: false
+          };
+          state.elements.push(newEl);
+          state.selectedElementId = newEl.id;
+
+          if (state.syncFrontBack) {
+            syncSingleElementToBack(newEl);
+          }
+
+          renderMasterEditor();
+          updatePropertyPanel();
+          renderPreview();
+          showToast('已插入圖片！', 'success');
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+      });
+
+      // 強制同步按鈕
+      document.getElementById('btnSyncToBackNow').addEventListener('click', () => {
+        triggerAutoSyncBack(true);
+        renderMasterEditor();
+        updatePropertyPanel();
+        renderPreview();
+        showToast('已將正面內容全數同步鏡射至背面！', 'success');
+      });
+
+      // 即時連動開關
+      document.getElementById('chkSyncFrontBack').addEventListener('change', (e) => {
+        state.syncFrontBack = e.target.checked;
+        if (state.syncFrontBack) {
+          triggerAutoSyncBack();
+          renderMasterEditor();
+          renderPreview();
+          showToast('已開啟正面背面即時連動', 'info');
+        }
+      });
+    }
+
+    // 元件版面定位與文字內部對齊控制
+    function setupAlignmentControls() {
+      // 1. 元件在立牌上的外框定位 (調整 X 座標)
+      const btnAlignLeft = document.getElementById('btnAlignLeft');
+      const btnAlignCenter = document.getElementById('btnAlignCenter');
+      const btnAlignRight = document.getElementById('btnAlignRight');
+
+      if (btnAlignLeft) {
+        btnAlignLeft.addEventListener('click', () => {
+          const el = getSelectedElement();
+          if (!el) return;
+          el.x = 4;
+          afterElementPropertyChange(el);
+        });
+      }
+
+      if (btnAlignCenter) {
+        btnAlignCenter.addEventListener('click', () => {
+          const el = getSelectedElement();
+          if (!el) return;
+          const curW = TENT_SIZES[state.currentSizeKey].width;
+          el.x = Math.max(0, Math.round(((curW - el.width) / 2) * 2) / 2);
+          afterElementPropertyChange(el);
+        });
+      }
+
+      if (btnAlignRight) {
+        btnAlignRight.addEventListener('click', () => {
+          const el = getSelectedElement();
+          if (!el) return;
+          const curW = TENT_SIZES[state.currentSizeKey].width;
+          el.x = Math.max(0, curW - el.width - 4);
+          afterElementPropertyChange(el);
+        });
+      }
+
+      // 2. 文字區塊內部對齊 (靠左 / 置中 / 靠右)
+      const btnTextAlignLeft = document.getElementById('btnTextAlignLeft');
+      const btnTextAlignCenter = document.getElementById('btnTextAlignCenter');
+      const btnTextAlignRight = document.getElementById('btnTextAlignRight');
+
+      if (btnTextAlignLeft) {
+        btnTextAlignLeft.addEventListener('click', () => {
+          const el = getSelectedElement();
+          if (!el || el.type !== 'text') return;
+          el.align = 'left';
+          updateTextAlignButtons('left');
+          afterElementPropertyChange(el);
+        });
+      }
+
+      if (btnTextAlignCenter) {
+        btnTextAlignCenter.addEventListener('click', () => {
+          const el = getSelectedElement();
+          if (!el || el.type !== 'text') return;
+          el.align = 'center';
+          updateTextAlignButtons('center');
+          afterElementPropertyChange(el);
+        });
+      }
+
+      if (btnTextAlignRight) {
+        btnTextAlignRight.addEventListener('click', () => {
+          const el = getSelectedElement();
+          if (!el || el.type !== 'text') return;
+          el.align = 'right';
+          updateTextAlignButtons('right');
+          afterElementPropertyChange(el);
+        });
+      }
+    }
+
+    // 更新文字內部對齊按鈕的高亮外觀
+    function updateTextAlignButtons(align) {
+      const btnL = document.getElementById('btnTextAlignLeft');
+      const btnC = document.getElementById('btnTextAlignCenter');
+      const btnR = document.getElementById('btnTextAlignRight');
+      if (!btnL || !btnC || !btnR) return;
+
+      const activeCls = 'flex-1 py-1 px-1.5 rounded text-[11px] font-bold border border-indigo-500 bg-indigo-600 text-white flex items-center justify-center gap-1 transition shadow-xs';
+      const inactiveCls = 'flex-1 py-1 px-1.5 rounded text-[11px] font-medium border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 flex items-center justify-center gap-1 transition';
+
+      btnL.className = align === 'left' ? activeCls : inactiveCls;
+      btnC.className = align === 'center' ? activeCls : inactiveCls;
+      btnR.className = align === 'right' ? activeCls : inactiveCls;
+    }
+
+    // 渲染設計編輯器畫布
+    function renderMasterEditor() {
+      const canvas = document.getElementById('tentMasterCanvas');
+      if (!canvas) return;
+
+      const curSpec = TENT_SIZES[state.currentSizeKey];
+      applyMasterZoom(state.canvasZoom, state.isAutoFit);
+      canvas.style.backgroundColor = state.bgColor;
+      canvas.innerHTML = '';
+
+      // 渲染背面與正面裝飾邊框 (10 種樣式)
+      renderDecoratedBorders(canvas, curSpec.width);
+
+      // 中央山摺線導引
+      const foldGuide = document.createElement('div');
+      foldGuide.id = 'canvasFoldGuide';
+      foldGuide.className = 'absolute w-full border-b-2 border-dashed border-rose-400 pointer-events-none z-10 flex items-center justify-between px-2 text-[9px] text-rose-500 font-mono font-bold';
+      foldGuide.style.top = `${70 * MM_TO_PX}px`;
+      foldGuide.innerHTML = `
+        <span>▲ 背面區域 (折疊時朝後，自動鏡射翻轉)</span>
+        <span>【對摺山摺線 70mm】</span>
+        <span>▼ 正面區域 (正向編輯主區)</span>
+      `;
+      canvas.appendChild(foldGuide);
+
+      // 點擊空白處切換選取
+      canvas.onmousedown = (e) => {
+        if (e.target === canvas) {
+          state.selectedElementId = null;
+          document.querySelectorAll('.designer-element').forEach(el => el.classList.remove('selected'));
+          updatePropertyPanel();
+        }
+      };
+
+      // 渲染所有圖元
+      state.elements.forEach(el => {
+        const dom = document.createElement('div');
+        dom.className = `designer-element ${state.selectedElementId === el.id ? 'selected' : ''} ${el.y < 70 ? 'is-back' : ''}`;
+        dom.id = `el_${el.id}`;
+        dom.style.left = `${el.x * MM_TO_PX}px`;
+        dom.style.top = `${el.y * MM_TO_PX}px`;
+        dom.style.width = `${el.width * MM_TO_PX}px`;
+        dom.style.height = `${el.height * MM_TO_PX}px`;
+
+        if (el.rotate180) {
+          dom.style.transform = 'rotate(180deg)';
+        } else {
+          dom.style.transform = 'none';
+        }
+
+        // 縮放手柄
+        const brHandle = document.createElement('div');
+        brHandle.className = 'resize-handle br';
+        dom.appendChild(brHandle);
+
+        // 元件內部渲染
+        const contentBox = document.createElement('div');
+        contentBox.className = 'w-full h-full flex items-center overflow-hidden pointer-events-none select-none';
+
+        if (el.type === 'text') {
+          const textDiv = document.createElement('div');
+          textDiv.style.width = '100%';
+          textDiv.style.fontFamily = el.fontFamily || "'DFKai-SB', '標楷體', KaiTi, serif";
+          textDiv.style.fontSize = `${el.fontSize * 1.33}px`;
+          textDiv.style.fontWeight = el.bold ? '700' : '500';
+          textDiv.style.textDecoration = el.underline ? 'underline' : 'none';
+          textDiv.style.color = el.color || '#000000';
+          textDiv.style.textAlign = el.align || 'center';
+          textDiv.style.lineHeight = '1.15';
+          textDiv.style.whiteSpace = 'pre-wrap';
+          textDiv.innerText = el.text;
+          contentBox.appendChild(textDiv);
+        } else if (el.type === 'image') {
+          const img = document.createElement('img');
+          img.src = el.src;
+          img.style.maxWidth = '100%';
+          img.style.maxHeight = '100%';
+          img.style.objectFit = 'contain';
+          img.style.margin = 'auto';
+          contentBox.appendChild(img);
+        }
+
+        dom.appendChild(contentBox);
+        bindElementInteractions(dom, el, brHandle);
+        canvas.appendChild(dom);
+      });
+    }
+
+    // 渲染 10 種精美面板邊框 (同時套用於正面 70mm 與背面 70mm)
+    function renderDecoratedBorders(container, widthMm) {
+      if (state.borderStyle === 'none') return;
+
+      const panels = [
+        { topMm: 2, heightMm: 66, isBack: true },   // 背面裝飾框
+        { topMm: 72, heightMm: 66, isBack: false }  // 正面裝飾框
+      ];
+
+      panels.forEach(p => {
+        const box = document.createElement('div');
+        box.className = 'absolute pointer-events-none';
+        box.style.left = `${3 * MM_TO_PX}px`;
+        box.style.width = `${(widthMm - 6) * MM_TO_PX}px`;
+        box.style.top = `${p.topMm * MM_TO_PX}px`;
+        box.style.height = `${p.heightMm * MM_TO_PX}px`;
+
+        switch (state.borderStyle) {
+          case 'thin-solid':
+            box.style.border = '1px solid #94a3b8';
+            break;
+          case 'double-fine':
+            box.style.border = '3px double #64748b';
+            break;
+          case 'inset-border':
+            box.style.border = '1.5px solid #475569';
+            box.style.boxShadow = 'inset 0 0 0 2px #f8fafc, inset 0 0 0 3px #94a3b8';
+            break;
+          case 'dashed-modern':
+            box.style.border = '1.5px dashed #64748b';
+            break;
+          case 'dotted-neat':
+            box.style.border = '2px dotted #94a3b8';
+            break;
+          case 'top-bottom-line':
+            box.style.borderTop = '2px solid #334155';
+            box.style.borderBottom = '2px solid #334155';
+            break;
+          case 'corner-bracket':
+            box.style.border = '1px solid #cbd5e1';
+            box.innerHTML = `
+              <div style="position:absolute; top:-1px; left:-1px; width:8px; height:8px; border-top:3px solid #334155; border-left:3px solid #334155;"></div>
+              <div style="position:absolute; top:-1px; right:-1px; width:8px; height:8px; border-top:3px solid #334155; border-right:3px solid #334155;"></div>
+              <div style="position:absolute; bottom:-1px; left:-1px; width:8px; height:8px; border-bottom:3px solid #334155; border-left:3px solid #334155;"></div>
+              <div style="position:absolute; bottom:-1px; right:-1px; width:8px; height:8px; border-bottom:3px solid #334155; border-right:3px solid #334155;"></div>
+            `;
+            break;
+          case 'double-inset':
+            box.style.border = '2px solid #334155';
+            box.style.boxShadow = 'inset 0 0 0 2.5px #f1f5f9, inset 0 0 0 4px #64748b';
+            break;
+          case 'champagne-gold':
+            box.style.border = '1.5px solid #d97706';
+            box.style.boxShadow = 'inset 0 0 0 2px #fffbeb, inset 0 0 0 3.5px #b45309';
+            break;
+        }
+
+        container.appendChild(box);
+      });
+    }
+
+    // 綁定圖元拖曳移動與手柄縮放
+    function bindElementInteractions(dom, el, brHandle) {
+      dom.addEventListener('mousedown', (e) => {
+        if (e.target === brHandle) return;
+        e.stopPropagation();
+        state.selectedElementId = el.id;
+        document.querySelectorAll('.designer-element').forEach(item => item.classList.remove('selected'));
+        dom.classList.add('selected');
+        updatePropertyPanel();
+
+        let startX = e.clientX;
+        let startY = e.clientY;
+        let initialX = el.x;
+        let initialY = el.y;
+
+        const onMouseMove = (moveEvent) => {
+          const curZoom = state.canvasZoom || 1.0;
+          const deltaX = (moveEvent.clientX - startX) / (MM_TO_PX * curZoom);
+          const deltaY = (moveEvent.clientY - startY) / (MM_TO_PX * curZoom);
+
+          const curSpec = TENT_SIZES[state.currentSizeKey];
+          el.x = Math.max(0, Math.min(curSpec.width - el.width, Math.round((initialX + deltaX) * 2) / 2));
+          el.y = Math.max(0, Math.min(140 - el.height, Math.round((initialY + deltaY) * 2) / 2));
+
+          dom.style.left = `${el.x * MM_TO_PX}px`;
+          dom.style.top = `${el.y * MM_TO_PX}px`;
+
+          afterElementPropertyChange(el, false);
+        };
+
+        const onMouseUp = () => {
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onMouseUp);
+          afterElementPropertyChange(el, true);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+      });
+
+      // 右下角縮放
+      brHandle.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        let startX = e.clientX;
+        let startY = e.clientY;
+        let initialW = el.width;
+        let initialH = el.height;
+
+        const onMouseMove = (moveEvent) => {
+          const curZoom = state.canvasZoom || 1.0;
+          let deltaW = (moveEvent.clientX - startX) / (MM_TO_PX * curZoom);
+          let deltaH = (moveEvent.clientY - startY) / (MM_TO_PX * curZoom);
+
+          el.width = Math.max(10, Math.round((initialW + deltaW) * 2) / 2);
+          el.height = Math.max(6, Math.round((initialH + deltaH) * 2) / 2);
+
+          dom.style.width = `${el.width * MM_TO_PX}px`;
+          dom.style.height = `${el.height * MM_TO_PX}px`;
+
+          afterElementPropertyChange(el, false);
+        };
+
+        const onMouseUp = () => {
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onMouseUp);
+          afterElementPropertyChange(el, true);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+      });
+    }
+
+    // 正面變更後，即時鏡射同步至背面
+    function afterElementPropertyChange(changedEl, shouldReRenderEditor = true) {
+      if (state.syncFrontBack) {
+        if (changedEl.y >= 70) {
+          syncSingleElementToBack(changedEl);
+        }
+      }
+
+      syncGeometryInputs();
+      if (shouldReRenderEditor) {
+        renderMasterEditor();
+      }
+      renderPreview();
+    }
+
+    // 計算對稱座標並同步正面元件至背面
+    function syncSingleElementToBack(frontEl) {
+      const curSpec = TENT_SIZES[state.currentSizeKey];
+      const backId = frontEl.id.startsWith('front_') ? frontEl.id.replace('front_', 'back_') : 'back_sync_' + frontEl.id;
+
+      let backEl = state.elements.find(e => e.id === backId);
+      if (!backEl) {
+        backEl = { ...frontEl, id: backId, side: 'back' };
+        state.elements.push(backEl);
+      }
+
+      // 屬性完全同步
+      backEl.type = frontEl.type;
+      backEl.text = frontEl.text;
+      backEl.src = frontEl.src;
+      backEl.fontFamily = frontEl.fontFamily;
+      backEl.fontSize = frontEl.fontSize;
+      backEl.bold = frontEl.bold;
+      backEl.underline = frontEl.underline;
+      backEl.color = frontEl.color;
+      backEl.width = frontEl.width;
+      backEl.height = frontEl.height;
+      backEl.rotate180 = true; // 背面恆為 180 度翻轉
+
+      // 視角對稱文字對齊：因 180 度旋轉，對面入座貴賓所視之靠左即為背面元件之靠右
+      if (frontEl.align === 'left') {
+        backEl.align = 'right';
+      } else if (frontEl.align === 'right') {
+        backEl.align = 'left';
+      } else {
+        backEl.align = 'center';
+      }
+
+      // 幾何對稱映射 (以對摺山摺線 70mm 為對稱軸，翻轉 180 度後的空間座標)
+      backEl.x = Math.max(0, curSpec.width - frontEl.x - frontEl.width);
+      const distFromFold = frontEl.y - 70;
+      backEl.y = Math.max(0, 70 - distFromFold - frontEl.height);
+    }
+
+    // 全域自動同步所有正面元件至背面
+    function triggerAutoSyncBack(forceAll = false) {
+      const frontElements = state.elements.filter(e => e.y >= 70);
+      frontElements.forEach(fEl => {
+        syncSingleElementToBack(fEl);
+      });
+    }
+
+    /* =================== 3. 屬性面板事件綁定 =================== */
+    function setupPropertyPanel() {
+      // 刪除按鈕
+      document.getElementById('btnDeleteElement').addEventListener('click', () => {
+        if (!state.selectedElementId) return;
+        const targetId = state.selectedElementId;
+        state.elements = state.elements.filter(e => e.id !== targetId);
+
+        // 若開啟連動同步，同時清除背面對應元件
+        if (state.syncFrontBack && targetId.startsWith('front_')) {
+          const backId = targetId.replace('front_', 'back_');
+          state.elements = state.elements.filter(e => e.id !== backId);
+        }
+
+        state.selectedElementId = null;
+        renderMasterEditor();
+        updatePropertyPanel();
+        renderPreview();
+        showToast('已刪除元件', 'info');
+      });
+
+      // 文字內容變更
+      document.getElementById('propTextInput').addEventListener('input', (e) => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          el.text = e.target.value;
+          afterElementPropertyChange(el);
+        }
+      });
+
+      // 旋轉 180 度開關
+      document.getElementById('propTextRotate180').addEventListener('change', (e) => {
+        const el = getSelectedElement();
+        if (el) {
+          el.rotate180 = e.target.checked;
+          afterElementPropertyChange(el);
+        }
+      });
+
+      // 字型選擇
+      document.getElementById('propFontFamily').addEventListener('change', (e) => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          el.fontFamily = e.target.value;
+          afterElementPropertyChange(el);
+        }
+      });
+
+      // 自訂字型上傳 (.ttf / .otf / .woff / .woff2)
+      const fontUploadInput = document.getElementById('propCustomFontUpload');
+      if (fontUploadInput) {
+        fontUploadInput.addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const fontId = 'CustomFont_' + Date.now();
+          const cleanLabel = file.name.replace(/\.[^/.]+$/, "");
+
+          try {
+            const fontBuffer = await file.arrayBuffer();
+            const fontFace = new FontFace(fontId, fontBuffer);
+            await fontFace.load();
+            document.fonts.add(fontFace);
+
+            state.customFonts.push({
+              id: fontId,
+              label: cleanLabel,
+              family: `'${fontId}', sans-serif`
+            });
+
+            updateCustomFontSelectOptions(fontId);
+
+            const el = getSelectedElement();
+            if (el && el.type === 'text') {
+              el.fontFamily = `'${fontId}', sans-serif`;
+              afterElementPropertyChange(el);
+            }
+
+            const badge = document.getElementById('customFontSuccessBadge');
+            const nameLabel = document.getElementById('customFontNameLabel');
+            if (badge && nameLabel) {
+              badge.classList.remove('hidden');
+              nameLabel.innerText = `已載入並套用：「${cleanLabel}」`;
+            }
+
+            showToast(`字型「${cleanLabel}」載入成功！`, 'success');
+          } catch (err) {
+            console.error('Font upload error:', err);
+            showToast('字型檔案載入失敗，請確認為標準 TTF/OTF/WOFF 檔案！', 'error');
+          }
+
+          e.target.value = '';
+        });
+      }
+
+      // 字體大小
+      document.getElementById('propTextSize').addEventListener('input', (e) => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          el.fontSize = parseFloat(e.target.value) || 12;
+          afterElementPropertyChange(el);
+        }
+      });
+
+      // 粗體
+      document.getElementById('propTextBold').addEventListener('change', (e) => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          el.bold = e.target.checked;
+          afterElementPropertyChange(el);
+        }
+      });
+
+      // 底線
+      document.getElementById('propTextUnderline').addEventListener('change', (e) => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          el.underline = e.target.checked;
+          afterElementPropertyChange(el);
+        }
+      });
+
+      // 顏色
+      document.getElementById('propTextColor').addEventListener('input', (e) => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          el.color = e.target.value;
+          document.getElementById('propTextColorCode').innerText = e.target.value;
+          afterElementPropertyChange(el);
+        }
+      });
+
+      // 手動微調 X, Y, 寬, 高
+      ['propPosX', 'propPosY', 'propWidth', 'propHeight'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          const el = getSelectedElement();
+          if (!el) return;
+          el.x = parseFloat(document.getElementById('propPosX').value) || 0;
+          el.y = parseFloat(document.getElementById('propPosY').value) || 0;
+          el.width = parseFloat(document.getElementById('propWidth').value) || 10;
+          el.height = parseFloat(document.getElementById('propHeight').value) || 5;
+          afterElementPropertyChange(el);
+        });
+      });
+    }
+
+    function updateCustomFontSelectOptions(selectedFontId = null) {
+      const optgroup = document.getElementById('optgroupCustomFonts');
+      const select = document.getElementById('propFontFamily');
+      if (!optgroup || !select) return;
+
+      if (state.customFonts.length === 0) {
+        optgroup.disabled = true;
+        optgroup.innerHTML = '<option value="" disabled>尚未上傳字型</option>';
+      } else {
+        optgroup.disabled = false;
+        optgroup.innerHTML = '';
+        state.customFonts.forEach(font => {
+          const opt = document.createElement('option');
+          opt.value = font.family;
+          opt.innerText = `★ ${font.label}`;
+          if (selectedFontId && font.id === selectedFontId) {
+            opt.selected = true;
+          }
+          optgroup.appendChild(opt);
+        });
+        if (selectedFontId) {
+          select.value = `'${selectedFontId}', sans-serif`;
+        }
+      }
+    }
+
+    function getSelectedElement() {
+      if (!state.selectedElementId) return null;
+      return state.elements.find(e => e.id === state.selectedElementId);
+    }
+
+    function updatePropertyPanel() {
+      const el = getSelectedElement();
+      const hint = document.getElementById('noElementHint');
+      const textGroup = document.getElementById('propTextGroup');
+      const geoGroup = document.getElementById('propGeometryGroup');
+      const titleSpan = document.getElementById('propPanelTitle');
+      const delBtn = document.getElementById('btnDeleteElement');
+
+      if (!el) {
+        hint.classList.remove('hidden');
+        textGroup.classList.add('hidden');
+        geoGroup.classList.add('hidden');
+        delBtn.classList.add('hidden');
+        titleSpan.innerText = '元件屬性編輯 (尚未選取元件)';
+        return;
+      }
+
+      hint.classList.add('hidden');
+      geoGroup.classList.remove('hidden');
+      delBtn.classList.remove('hidden');
+      syncGeometryInputs();
+
+      if (el.type === 'text') {
+        textGroup.classList.remove('hidden');
+        titleSpan.innerText = `編輯：文字 (${el.y < 70 ? '背面' : '正面'})`;
+        document.getElementById('propTextInput').value = el.text;
+        document.getElementById('propTextSize').value = el.fontSize;
+        document.getElementById('propTextBold').checked = !!el.bold;
+        document.getElementById('propTextUnderline').checked = !!el.underline;
+        document.getElementById('propTextColor').value = el.color || '#000000';
+        document.getElementById('propTextColorCode').innerText = el.color || '#000000';
+        document.getElementById('propTextRotate180').checked = !!el.rotate180;
+        document.getElementById('propFontFamily').value = el.fontFamily || "'DFKai-SB', '標楷體', KaiTi, serif";
+        updateTextAlignButtons(el.align || 'center');
+      } else {
+        textGroup.classList.add('hidden');
+        titleSpan.innerText = `編輯：圖片 (${el.y < 70 ? '背面' : '正面'})`;
+      }
+    }
+
+    function syncGeometryInputs() {
+      const el = getSelectedElement();
+      if (!el) return;
+      document.getElementById('propPosX').value = el.x;
+      document.getElementById('propPosY').value = el.y;
+      document.getElementById('propWidth').value = el.width;
+      document.getElementById('propHeight').value = el.height;
+    }
+
+    /* =================== 4. Excel 資料庫匯入與管理 =================== */
+    function setupExcelImporter() {
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('excelFileInput');
+
+      dropZone.addEventListener('click', () => fileInput.click());
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-indigo-600', 'bg-indigo-100/50');
+      });
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-indigo-600', 'bg-indigo-100/50');
+      });
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-indigo-600', 'bg-indigo-100/50');
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          handleExcelFile(e.dataTransfer.files[0]);
+        }
+      });
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          handleExcelFile(e.target.files[0]);
+        }
+      });
+
+      document.getElementById('btnLoadSample').addEventListener('click', () => {
+        loadDataRecords(SAMPLE_RECORDS);
+        showToast('已載入 6 筆貴賓示範名單！', 'success');
+      });
+
+      document.getElementById('btnClearData').addEventListener('click', () => {
+        state.data = [];
+        state.fields = [];
+        updateDataViews();
+        calculatePagination();
+        renderPreview();
+        showToast('名單已清空', 'info');
+      });
+    }
+
+    function handleExcelFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+
+          if (!json || json.length === 0) {
+            showToast('試算表內無有效資料列！', 'error');
+            return;
+          }
+          loadDataRecords(json);
+          showToast(`成功匯入 ${json.length} 筆名單！`, 'success');
+        } catch (err) {
+          console.error(err);
+          showToast('Excel 解析失敗，請確認檔案格式', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function loadDataRecords(records) {
+      state.data = records;
+      state.fields = records.length > 0 ? Object.keys(records[0]) : [];
+      updateDataViews();
+      calculatePagination();
+      renderPreview();
+    }
+
+    function updateDataViews() {
+      const chipsContainer = document.getElementById('chipsContainer');
+      chipsContainer.innerHTML = '';
+      if (state.fields.length === 0) {
+        chipsContainer.innerHTML = '<span class="text-xs text-slate-400 italic">尚無欄位標籤</span>';
+      } else {
+        state.fields.forEach(f => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded font-mono transition';
+          btn.innerText = `{${f}}`;
+          btn.addEventListener('click', () => {
+            copyTextToClipboard(`{${f}}`);
+            showToast(`已複製變數標籤 {${f}}`, 'info');
+          });
+          chipsContainer.appendChild(btn);
+        });
+      }
+
+      document.getElementById('dataCountBadge').innerText = state.data.length;
+      document.getElementById('recordCountText').innerText = state.data.length;
+
+      const thead = document.getElementById('dataTableHead');
+      const tbody = document.getElementById('dataTableBody');
+
+      if (state.data.length === 0) {
+        thead.innerHTML = '<tr><th class="p-2">#</th><th class="p-2">狀態</th></tr>';
+        tbody.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-slate-400">尚無名單資料</td></tr>';
+        return;
+      }
+
+      let thHtml = '<tr class="bg-slate-100 border-b border-slate-200"><th class="p-2 w-8 text-slate-500">#</th>';
+      state.fields.forEach(f => {
+        thHtml += `<th class="p-2 text-slate-700 whitespace-nowrap font-semibold">${escapeHtml(f)}</th>`;
+      });
+      thHtml += '</tr>';
+      thead.innerHTML = thHtml;
+
+      let tbHtml = '';
+      state.data.slice(0, 50).forEach((row, idx) => {
+        tbHtml += `<tr class="hover:bg-indigo-50/50"><td class="p-2 text-slate-400 font-mono">${idx + 1}</td>`;
+        state.fields.forEach(f => {
+          tbHtml += `<td class="p-2 text-slate-600 whitespace-nowrap">${escapeHtml(String(row[f] || ''))}</td>`;
+        });
+        tbHtml += '</tr>';
+      });
+
+      if (state.data.length > 50) {
+        tbHtml += `<tr><td colspan="${state.fields.length + 1}" class="p-2 text-center text-slate-400 bg-slate-50">... 其餘 ${state.data.length - 50} 筆已省略</td></tr>`;
+      }
+      tbody.innerHTML = tbHtml;
+    }
+
+    /* =================== 5. 專案備份匯出與匯入功能 =================== */
+    function setupBackupHandlers() {
+      // 匯出備份 (.json)
+      const btnExport = document.getElementById('btnExportBackup');
+      btnExport.addEventListener('click', () => {
+        const backupData = {
+          version: '1.2',
+          exportedAt: new Date().toISOString(),
+          appName: 'A字三角立牌製作機',
+          currentSizeKey: state.currentSizeKey,
+          bgColor: state.bgColor,
+          borderStyle: state.borderStyle,
+          showFoldLine: state.showFoldLine,
+          showCutBorder: state.showCutBorder,
+          offsetX: state.offsetX,
+          offsetY: state.offsetY,
+          syncFrontBack: state.syncFrontBack,
+          elements: state.elements,
+          data: state.data
+        };
+
+        const jsonStr = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateStr = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `三角立牌備份_${TENT_SIZES[state.currentSizeKey].name.slice(0, 4)}_${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('專案版面與名單備份已成功匯出！', 'success');
+      });
+
+      // 匯入備份 (.json)
+      const inputImport = document.getElementById('inputImportBackup');
+      inputImport.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const imported = JSON.parse(event.target.result);
+            if (!imported.elements || !Array.isArray(imported.elements)) {
+              showToast('備份檔案格式不正確，缺少元件資料！', 'error');
+              return;
+            }
+
+            // 還原狀態
+            if (imported.currentSizeKey && TENT_SIZES[imported.currentSizeKey]) {
+              state.currentSizeKey = imported.currentSizeKey;
+              const radio = document.querySelector(`input[name="tentSizePreset"][value="${imported.currentSizeKey}"]`);
+              if (radio) radio.checked = true;
+            }
+
+            if (imported.bgColor) {
+              state.bgColor = imported.bgColor;
+              document.getElementById('customColorPicker').value = imported.bgColor;
+            }
+
+            if (imported.borderStyle) {
+              state.borderStyle = imported.borderStyle;
+              document.getElementById('selectBorderStyle').value = imported.borderStyle;
+            }
+
+            if (typeof imported.showFoldLine === 'boolean') {
+              state.showFoldLine = imported.showFoldLine;
+              document.getElementById('chkPrintFoldLine').checked = imported.showFoldLine;
+            }
+
+            if (typeof imported.showCutBorder === 'boolean') {
+              state.showCutBorder = imported.showCutBorder;
+              document.getElementById('chkPrintCutLine').checked = imported.showCutBorder;
+            }
+
+            if (typeof imported.offsetX === 'number') {
+              state.offsetX = imported.offsetX;
+              document.getElementById('inputOffsetX').value = imported.offsetX;
+            }
+
+            if (typeof imported.offsetY === 'number') {
+              state.offsetY = imported.offsetY;
+              document.getElementById('inputOffsetY').value = imported.offsetY;
+            }
+
+            if (typeof imported.syncFrontBack === 'boolean') {
+              state.syncFrontBack = imported.syncFrontBack;
+              document.getElementById('chkSyncFrontBack').checked = imported.syncFrontBack;
+            }
+
+            state.elements = imported.elements;
+            state.selectedElementId = state.elements[0]?.id || null;
+
+            if (Array.isArray(imported.data)) {
+              loadDataRecords(imported.data);
+            }
+
+            updateSizeOptionStyles();
+            renderPastelPaletteButtons();
+            fitMasterCanvas();
+            renderMasterEditor();
+            updatePropertyPanel();
+            renderPreview();
+
+            showToast('專案備份資料已成功載入還原！', 'success');
+          } catch (err) {
+            console.error('Backup import error:', err);
+            showToast('解析備份檔案失敗，請確認是否為合法的 JSON 檔！', 'error');
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      });
+    }
+
+    /* =================== 6. A4 雙立牌渲染與分頁控制 =================== */
+    const TENTS_PER_PAGE = 2;
+
+    function calculatePagination() {
+      const count = state.data.length > 0 ? state.data.length : 1;
+      state.totalPages = Math.max(1, Math.ceil(count / TENTS_PER_PAGE));
+      if (state.currentPage > state.totalPages) state.currentPage = state.totalPages;
+
+      document.getElementById('curPageNum').innerText = state.currentPage;
+      document.getElementById('totalPageNum').innerText = state.totalPages;
+      document.getElementById('pageInfoText').innerText = `1 張 A4 列印 2 個立牌 • 名單共 ${state.data.length} 筆 • 預計列印 ${state.totalPages} 頁 A4`;
+    }
+
+    function setupZoomAndNavigation() {
+      const zoomWrapper = document.getElementById('previewZoomWrapper');
+      const zoomText = document.getElementById('zoomLevelText');
+
+      const applyPreviewZoom = (z) => {
+        state.zoom = Math.min(Math.max(0.3, z), 1.8);
+        zoomWrapper.style.transform = `scale(${state.zoom})`;
+        zoomText.innerText = `${Math.round(state.zoom * 100)}%`;
+      };
+
+      document.getElementById('btnZoomIn').addEventListener('click', () => applyPreviewZoom(state.zoom + 0.1));
+      document.getElementById('btnZoomOut').addEventListener('click', () => applyPreviewZoom(state.zoom - 0.1));
+      document.getElementById('btnZoomFit').addEventListener('click', () => {
+        const parentW = zoomWrapper.parentElement.clientWidth - 40;
+        applyPreviewZoom(parentW / 794);
+      });
+
+      document.getElementById('btnPrevPage').addEventListener('click', () => {
+        if (state.currentPage > 1) {
+          state.currentPage--;
+          document.getElementById('curPageNum').innerText = state.currentPage;
+          renderPreview();
+        }
+      });
+      document.getElementById('btnNextPage').addEventListener('click', () => {
+        if (state.currentPage < state.totalPages) {
+          state.currentPage++;
+          document.getElementById('curPageNum').innerText = state.currentPage;
+          renderPreview();
+        }
+      });
+
+      document.getElementById('btnPrint').addEventListener('click', () => {
+        prepareAndPrintAllPages();
+      });
+    }
+
+    // 渲染 A4 預覽畫布 (精準 210 × 297 mm, 容納 2 個 140mm 高立牌)
+    function renderPreview() {
+      const canvas = document.getElementById('a4PreviewCanvas');
+      canvas.innerHTML = '';
+
+      const curSpec = TENT_SIZES[state.currentSizeKey];
+      const pageIndex = state.currentPage - 1;
+
+      const leftMm = ((210 - curSpec.width) / 2) + state.offsetX;
+      const topTents = [
+        8.5 + state.offsetY,       // 第一座立牌頂部
+        148.5 + state.offsetY      // 第二座立牌頂部
+      ];
+
+      for (let i = 0; i < TENTS_PER_PAGE; i++) {
+        const dataIdx = pageIndex * TENTS_PER_PAGE + i;
+        const currentRecord = (state.data.length > 0 && dataIdx < state.data.length) 
+          ? state.data[dataIdx] 
+          : (state.data.length === 0 && dataIdx === 0 ? { 姓名: '李大維', 單位: '國立臺灣師範大學', 職稱: '講座教授' } : null);
+
+        const tentBox = createSingleTentCardElement(curSpec, currentRecord, leftMm, topTents[i]);
+        canvas.appendChild(tentBox);
+      }
+    }
+
+    // 建立單座三角立牌完整 DOM 元件 (展開長度 × 140mm)
+    function createSingleTentCardElement(spec, record, leftMm, topMm) {
+      const box = document.createElement('div');
+      box.style.position = 'absolute';
+      box.style.left = `${leftMm}mm`;
+      box.style.top = `${topMm}mm`;
+      box.style.width = `${spec.width}mm`;
+      box.style.height = `140mm`;
+      box.style.backgroundColor = state.bgColor;
+      box.style.boxSizing = 'border-box';
+      box.style.overflow = 'hidden';
+
+      // 裁切實線
+      if (state.showCutBorder) {
+        box.style.outline = '0.3mm solid #94a3b8';
+      }
+
+      // 空白立牌格
+      if (!record) {
+        box.style.backgroundColor = '#f8fafc';
+        box.innerHTML = `
+          <div class="h-full w-full flex items-center justify-center text-slate-300 text-xs font-mono select-none">
+            [空白備用立牌格]
+          </div>
+        `;
+        return box;
+      }
+
+      // 面板裝飾邊框
+      renderDecoratedBorders(box, spec.width);
+
+      // 中央對摺山摺線 (70mm)
+      if (state.showFoldLine) {
+        const foldLine = document.createElement('div');
+        foldLine.style.position = 'absolute';
+        foldLine.style.left = '0';
+        foldLine.style.top = '70mm';
+        foldLine.style.width = '100%';
+        foldLine.style.borderTop = '0.3mm dashed #cbd5e1';
+        foldLine.style.zIndex = '5';
+        box.appendChild(foldLine);
+      }
+
+      // 渲染所有圖元並替換變數
+      state.elements.forEach(el => {
+        const item = document.createElement('div');
+        item.style.position = 'absolute';
+        item.style.left = `${el.x}mm`;
+        item.style.top = `${el.y}mm`;
+        item.style.width = `${el.width}mm`;
+        item.style.height = `${el.height}mm`;
+        item.style.boxSizing = 'border-box';
+        item.style.overflow = 'hidden';
+
+        if (el.rotate180) {
+          item.style.transform = 'rotate(180deg)';
+        }
+
+        const inner = document.createElement('div');
+        inner.className = 'w-full h-full flex items-center';
+
+        if (el.type === 'text') {
+          const textDiv = document.createElement('div');
+          textDiv.style.width = '100%';
+          textDiv.style.fontFamily = el.fontFamily || "'DFKai-SB', '標楷體', KaiTi, serif";
+          textDiv.style.fontSize = `${el.fontSize}pt`;
+          textDiv.style.fontWeight = el.bold ? '700' : '500';
+          textDiv.style.textDecoration = el.underline ? 'underline' : 'none';
+          textDiv.style.color = el.color || '#000000';
+          textDiv.style.textAlign = el.align || 'center';
+          textDiv.style.lineHeight = '1.15';
+          textDiv.style.whiteSpace = 'pre-wrap';
+          textDiv.innerText = replaceTags(el.text, record);
+          inner.appendChild(textDiv);
+        } else if (el.type === 'image') {
+          const img = document.createElement('img');
+          img.src = el.src;
+          img.style.maxWidth = '100%';
+          img.style.maxHeight = '100%';
+          img.style.objectFit = 'contain';
+          img.style.margin = 'auto';
+          inner.appendChild(img);
+        }
+
+        item.appendChild(inner);
+        box.appendChild(item);
+      });
+
+      return box;
+    }
+
+    /* =================== 7. 列印輸出與輔助函式 =================== */
+    function prepareAndPrintAllPages() {
+      const printContainer = document.getElementById('printContainer');
+      printContainer.innerHTML = '';
+
+      const curSpec = TENT_SIZES[state.currentSizeKey];
+      const count = state.data.length > 0 ? state.data.length : 1;
+      const totalPages = Math.max(1, Math.ceil(count / TENTS_PER_PAGE));
+
+      const leftMm = ((210 - curSpec.width) / 2) + state.offsetX;
+      const topTents = [
+        8.5 + state.offsetY,
+        148.5 + state.offsetY
+      ];
+
+      for (let p = 0; p < totalPages; p++) {
+        const sheet = document.createElement('div');
+        sheet.className = 'a4-print-sheet';
+
+        for (let i = 0; i < TENTS_PER_PAGE; i++) {
+          const dataIdx = p * TENTS_PER_PAGE + i;
+          const record = (state.data.length > 0 && dataIdx < state.data.length) 
+            ? state.data[dataIdx] 
+            : (state.data.length === 0 && dataIdx === 0 ? { 姓名: '李大維', 單位: '國立臺灣師範大學', 職稱: '講座教授' } : null);
+
+          const tentBox = createSingleTentCardElement(curSpec, record, leftMm, topTents[i]);
+          sheet.appendChild(tentBox);
+        }
+
+        printContainer.appendChild(sheet);
+      }
+
+      setTimeout(() => {
+        window.print();
+      }, 350);
+    }
+
+    function replaceTags(str, record) {
+      if (!str) return '';
+      return str.replace(/\{([^}]+)\}/g, (match, key) => {
+        if (record && record[key] !== undefined) {
+          return record[key];
+        }
+        return match;
+      });
+    }
+
+    function copyTextToClipboard(text) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+      } catch (e) {
+        console.warn('Copy failed', e);
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function showToast(msg, type = 'info') {
+      const prev = document.getElementById('toastNotice');
+      if (prev) prev.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'toastNotice';
+      toast.className = `fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold flex items-center gap-2 transition-all duration-200 ${
+        type === 'error' ? 'bg-rose-600 text-white' :
+        type === 'success' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-100'
+      }`;
+
+      const icon = type === 'error' ? 'fa-circle-exclamation' :
+                   type === 'success' ? 'fa-circle-check' : 'fa-circle-info';
+
+      toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${escapeHtml(msg)}</span>`;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 250);
+      }, 2500);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
