@@ -139,7 +139,7 @@
           A字三角立牌製作機
           <span class="bg-indigo-500/30 text-indigo-300 text-xs px-2 py-0.5 rounded-full border border-indigo-400/30 font-normal">雙面同步版 (1張A4印2個)</span>
         </h1>
-        <p class="text-[11px] text-slate-400">正面/背面即時同步 • 180°自動翻轉 • 8種淡彩底色 • 10種典雅邊框 • 圖章印記 • 備份匯入匯出</p>
+        <p class="text-[11px] text-slate-400">正面/背面即時同步 • 180°自動翻轉 • 手動單筆/批次名單 • 8種底色 • 10種邊框 • 備份匯入匯出</p>
       </div>
     </div>
 
@@ -181,7 +181,7 @@
           <i class="fa-solid fa-object-group text-indigo-500"></i> 2. 版面設計
         </button>
         <button type="button" id="tabBtnData" class="tab-btn flex-1 py-3 px-2 border-b-2 border-transparent hover:text-slate-900 flex items-center justify-center gap-1.5 text-xs sm:text-sm text-slate-500">
-          <i class="fa-solid fa-file-excel"></i> 3. 名單資料 (<span id="dataCountBadge">0</span>)
+          <i class="fa-solid fa-users-gear text-indigo-500"></i> 3. 名單管理 (<span id="dataCountBadge">0</span>)
         </button>
       </div>
 
@@ -515,6 +515,7 @@
               </div>
             </div>
 
+            <!-- 圖章專屬屬性控制項 -->
             <div id="propStampGroup" class="space-y-2.5 hidden bg-white border border-rose-100 rounded-lg p-3">
               <div class="grid grid-cols-2 gap-2">
                 <div>
@@ -553,10 +554,37 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-3 gap-2">
+              <!-- 微傾旋轉控制區：即時滑桿 + 數值輸入 + 快捷度數按鈕 -->
+              <div class="bg-rose-50/60 border border-rose-200/80 rounded-lg p-2.5 space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-[11px] font-bold text-rose-950 flex items-center gap-1">
+                    <i class="fa-solid fa-rotate text-rose-600"></i> 圖章微傾角度 (仿真蓋印)：
+                  </label>
+                  <span id="propStampTiltLabel" class="text-xs font-mono font-bold text-rose-700 bg-white px-2 py-0.5 rounded border border-rose-200 shadow-xs">-8°</span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                  <input type="range" id="propStampTiltRange" min="-30" max="30" step="1" value="-8" class="flex-1 accent-rose-600 cursor-pointer h-1.5 bg-rose-200 rounded">
+                  <input type="number" id="propStampTiltNumber" min="-45" max="45" step="1" value="-8" class="w-12 bg-white border border-rose-300 rounded px-1 py-0.5 text-xs text-center font-mono font-bold text-rose-800">
+                  <span class="text-[10px] text-rose-600">度</span>
+                </div>
+
+                <!-- 常用傾斜角度快捷按鈕 -->
+                <div class="flex items-center justify-between pt-1 border-t border-rose-200/60 text-[10px]">
+                  <span class="text-rose-600/80">快捷：</span>
+                  <button type="button" class="btn-stamp-tilt bg-white hover:bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded border border-rose-200 font-medium transition" data-tilt="-12">-12° 古風</button>
+                  <button type="button" class="btn-stamp-tilt bg-rose-600 text-white font-bold px-1.5 py-0.5 rounded border border-rose-600 transition shadow-xs" data-tilt="-8">-8° 手蓋</button>
+                  <button type="button" class="btn-stamp-tilt bg-white hover:bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded border border-rose-200 font-medium transition" data-tilt="0">0° 端正</button>
+                  <button type="button" class="btn-stamp-tilt bg-white hover:bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded border border-rose-200 font-medium transition" data-tilt="8">+8° 順時</button>
+                  <button type="button" class="btn-stamp-tilt bg-white hover:bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded border border-rose-200 font-medium transition" data-tilt="15">+15°</button>
+                </div>
+              </div>
+
+              <!-- 印泥快速選色按鈕列 -->
+              <div class="grid grid-cols-2 gap-2">
                 <div>
                   <label class="block text-[10px] text-slate-600 mb-0.5">印泥顏色</label>
-                  <div class="flex items-center gap-1 mt-0.5">
+                  <div class="flex items-center gap-1.5">
                     <input type="color" id="propStampColorPicker" value="#dc2626" class="w-6 h-6 p-0 border border-slate-300 rounded cursor-pointer">
                     <span id="propStampColorCode" class="text-[10px] font-mono text-slate-500">#dc2626</span>
                   </div>
@@ -565,20 +593,10 @@
                   <label class="block text-[10px] text-slate-600 mb-0.5">印面字級 (pt)</label>
                   <input type="number" id="propStampFontSize" min="6" max="36" value="12" class="w-full bg-slate-50 border border-slate-300 rounded px-1.5 py-1 text-xs text-center">
                 </div>
-                <div>
-                  <label class="block text-[10px] text-slate-600 mb-0.5">微傾角度</label>
-                  <select id="propStampTilt" class="w-full bg-slate-50 border border-slate-300 rounded px-1 py-1 text-xs">
-                    <option value="0">0° 端正</option>
-                    <option value="-8">-8° 微側(自然)</option>
-                    <option value="8">+8° 順時側</option>
-                    <option value="-15">-15° 大角度</option>
-                  </select>
-                </div>
               </div>
 
-              <!-- 印泥快速選色按鈕列 -->
               <div class="flex items-center gap-1.5 pt-1 border-t border-slate-100">
-                <span class="text-[10px] text-slate-500">推薦印泥：</span>
+                <span class="text-[10px] text-slate-500">色票：</span>
                 <button type="button" class="btn-stamp-color text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded border border-red-300" data-color="#dc2626">硃砂紅</button>
                 <button type="button" class="btn-stamp-color text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-300" data-color="#d97706">尊貴金</button>
                 <button type="button" class="btn-stamp-color text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded border border-blue-300" data-color="#1d4ed8">商務藍</button>
@@ -631,31 +649,56 @@
 
         </div>
 
-        <!-- ================= 頁籤 3: Excel 資料庫名單 ================= -->
+        <!-- ================= 頁籤 3: 名單資料 (手動新增 + 批次貼上 + Excel) ================= -->
         <div id="tabContentData" class="tab-pane hidden space-y-4">
           
-          <div id="dropZone" class="border-2 border-dashed border-indigo-300 hover:border-indigo-500 bg-indigo-50/40 rounded-xl p-5 text-center cursor-pointer transition">
+          <!-- 手動輸入專區按鈕列 (最顯眼頂部操作) -->
+          <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-xs text-emerald-950 flex items-center gap-1.5">
+                <i class="fa-solid fa-keyboard text-emerald-600"></i> 手動建立與編輯名單
+              </span>
+              <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-medium">免裝 Excel 也能用</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button type="button" id="btnOpenAddSingleModal" class="text-xs bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 shadow-sm transition">
+                <i class="fa-solid fa-user-plus text-xs"></i>
+                <span>+ 手動新增單筆名單</span>
+              </button>
+              <button type="button" id="btnOpenBatchAddModal" class="text-xs bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 shadow-sm transition">
+                <i class="fa-solid fa-paste text-xs"></i>
+                <span>📋 多筆批次快速貼上</span>
+              </button>
+            </div>
+            <p class="text-[11px] text-emerald-700/80">
+              ※ 可隨時單筆輸入、從 Word/Line 批次整段貼上，或於下方直接編輯/刪除個別席位。
+            </p>
+          </div>
+
+          <!-- Excel 檔案拖曳與上傳 -->
+          <div id="dropZone" class="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/30 rounded-xl p-4 text-center cursor-pointer transition">
             <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden">
-            <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-2 text-lg shadow-sm">
+            <div class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-1.5 text-base shadow-sm">
               <i class="fa-solid fa-file-excel"></i>
             </div>
-            <h3 class="font-bold text-slate-800 text-xs sm:text-sm">點擊上傳或拖曳 Excel / CSV 席位名單</h3>
-            <p class="text-[11px] text-slate-500 mt-0.5">首列需為欄位名稱 (如: 單位, 職稱, 姓名, 桌號)</p>
+            <h3 class="font-bold text-slate-800 text-xs">或上傳 Excel / CSV 席位名單試算表</h3>
+            <p class="text-[10px] text-slate-500 mt-0.5">首列需為欄位名稱 (如: 單位, 職稱, 姓名, 桌號)</p>
           </div>
 
           <div class="flex items-center justify-between text-xs text-slate-500">
-            <span>名單筆數：<strong id="recordCountText" class="text-indigo-600 text-sm font-bold">0</strong> 筆</span>
-            <button type="button" id="btnClearData" class="text-rose-500 hover:text-rose-700 underline font-medium">清空名單</button>
+            <span>目前名單總計：<strong id="recordCountText" class="text-indigo-600 text-sm font-bold">0</strong> 筆</span>
+            <button type="button" id="btnClearData" class="text-rose-500 hover:text-rose-700 underline font-medium text-xs">清空所有名單</button>
           </div>
 
-          <!-- 名單表格預覽 -->
-          <div class="border border-slate-200 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
+          <!-- 名單表格預覽 (含編輯與刪除按鈕) -->
+          <div class="border border-slate-200 rounded-xl overflow-hidden max-h-72 overflow-y-auto bg-white shadow-xs">
             <table class="w-full text-left text-xs border-collapse" id="dataTable">
               <thead class="bg-slate-100 text-slate-600 sticky top-0 border-b border-slate-200" id="dataTableHead">
-                <tr><th class="p-2">#</th><th class="p-2">姓名</th><th class="p-2">單位/職稱</th></tr>
+                <tr><th class="p-2 w-10 text-center">#</th><th class="p-2">姓名</th><th class="p-2">單位/職稱</th><th class="p-2 w-24 text-center">操作</th></tr>
               </thead>
               <tbody class="divide-y divide-slate-100 text-slate-700" id="dataTableBody">
-                <tr><td colspan="3" class="p-4 text-center text-slate-400">尚無資料，請點擊上方按鈕載入示範名單或上傳 Excel</td></tr>
+                <tr><td colspan="4" class="p-4 text-center text-slate-400">尚無資料，請點擊上方按鈕新增或匯入名單</td></tr>
               </tbody>
             </table>
           </div>
@@ -714,6 +757,80 @@
 
     </main>
 
+  </div>
+
+  <!-- 彈跳視窗 1：手動新增/編輯單筆名單視窗 -->
+  <div id="modalSingleRecord" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 hidden no-print">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
+        <h3 id="modalSingleTitle" class="font-bold text-sm flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-emerald-400"></i>
+          <span>手動新增單筆名單</span>
+        </h3>
+        <button type="button" id="btnCloseSingleModal" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formSingleRecord" class="p-5 space-y-3.5 text-xs">
+        <input type="hidden" id="inputEditIndex" value="-1">
+        
+        <div id="dynamicFieldsContainer" class="space-y-3">
+          <!-- JS 動態依目前現存欄位渲染輸入框 -->
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" id="btnCancelSingleModal" class="px-3.5 py-1.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 font-medium transition">取消</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-xs flex items-center gap-1.5">
+            <i class="fa-solid fa-check"></i> 確定儲存
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 彈跳視窗 2：多筆名單批次快速貼上視窗 -->
+  <div id="modalBatchAdd" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 hidden no-print">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
+        <h3 class="font-bold text-sm flex items-center gap-2">
+          <i class="fa-solid fa-paste text-indigo-400"></i>
+          <span>多筆名單批次快速貼上</span>
+        </h3>
+        <button type="button" id="btnCloseBatchModal" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-3 text-xs">
+        <div class="bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-lg p-2.5 space-y-1">
+          <p class="font-bold">格式說明：</p>
+          <p class="text-[11px] text-indigo-800">
+            一行代表一位貴賓，欄位間請用「<strong>空格</strong>」、「<strong>逗號</strong>」或「<strong>Tab鍵</strong>」分開。<br>
+            預設順序：<strong>姓名 單位 職稱 桌號</strong> (範例：<code>李大維 師範大學 講座教授 第1桌</code>)
+          </p>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">請貼上名單內容 (支援數十筆一併貼上)：</label>
+          <textarea id="textareaBatchInput" rows="7" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 font-mono text-xs focus:bg-white focus:ring-1 focus:ring-indigo-500 leading-relaxed" placeholder="李大維 國立臺灣師範大學 講座教授 第1桌&#10;陳惠芬 新北市教育局 主任秘書 第1桌&#10;張明德 家長聯合會 總會長 第2桌"></textarea>
+        </div>
+
+        <div class="flex items-center justify-between pt-1 text-[11px] text-slate-500">
+          <label class="flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" id="chkBatchAppend" checked class="rounded text-indigo-600">
+            <span>接續在現有名單之後 (若未勾選則清空後覆蓋)</span>
+          </label>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" id="btnCancelBatchModal" class="px-3.5 py-1.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 font-medium transition">取消</button>
+          <button type="button" id="btnConfirmBatchAdd" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition shadow-xs flex items-center gap-1.5">
+            <i class="fa-solid fa-file-import"></i> 解析並加入名單
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- 列印專用隱藏容器 -->
@@ -905,6 +1022,7 @@
       setupAlignmentControls();
       setupPropertyPanel();
       setupExcelImporter();
+      setupManualDataHandlers();
       setupBackupHandlers();
       setupZoomAndNavigation();
       loadDataRecords(SAMPLE_RECORDS);
@@ -1263,24 +1381,29 @@
       let fillMode = 'transparent';
       let borderStyle = 'solid';
       let color = '#dc2626';
+      let defaultTilt = -8;
 
       if (shape === 'square') {
         stampText = '貴賓';
         w = 20; h = 20;
+        defaultTilt = -8;
       } else if (shape === 'rounded') {
         stampText = 'VIP席';
         w = 26; h = 14;
         fillMode = 'soft';
         color = '#d97706';
+        defaultTilt = 0;
       } else if (shape === 'badge') {
         stampText = '{桌號}';
         w = 22; h = 22;
         fillMode = 'solid';
         color = '#1d4ed8';
+        defaultTilt = 0;
       } else if (shape === 'double_circle') {
         stampText = '主席';
         w = 22; h = 22;
         borderStyle = 'double';
+        defaultTilt = -8;
       }
 
       const newStamp = {
@@ -1296,7 +1419,7 @@
         color: color,
         fillMode: fillMode,
         borderStyle: borderStyle,
-        tiltAngle: shape === 'square' || shape === 'circle' ? -8 : 0,
+        tiltAngle: defaultTilt,
         fontSize: shape === 'badge' ? 12 : 13,
         fontFamily: shape === 'badge' ? "'JetBrains Mono', monospace" : "'DFKai-SB', '標楷體', KaiTi, serif",
         bold: true,
@@ -1438,6 +1561,8 @@
         dom.style.top = `${el.y * MM_TO_PX}px`;
         dom.style.width = `${el.width * MM_TO_PX}px`;
         dom.style.height = `${el.height * MM_TO_PX}px`;
+        // 圖章確保外層不裁切傾斜角
+        dom.style.overflow = el.type === 'stamp' ? 'visible' : 'hidden';
 
         if (el.rotate180) {
           dom.style.transform = 'rotate(180deg)';
@@ -1450,7 +1575,7 @@
         dom.appendChild(brHandle);
 
         const contentBox = document.createElement('div');
-        contentBox.className = 'w-full h-full flex items-center justify-center overflow-hidden pointer-events-none select-none';
+        contentBox.className = `w-full h-full flex items-center justify-center pointer-events-none select-none ${el.type === 'stamp' ? 'overflow-visible' : 'overflow-hidden'}`;
 
         if (el.type === 'text') {
           const textDiv = document.createElement('div');
@@ -1521,9 +1646,10 @@
         wrapper.style.color = stampColor;
       }
 
-      if (el.tiltAngle && el.tiltAngle !== 0) {
-        wrapper.style.transform = `rotate(${el.tiltAngle}deg)`;
-      }
+      // 真實中心微傾旋轉
+      const tilt = parseFloat(el.tiltAngle) || 0;
+      wrapper.style.transform = `rotate(${tilt}deg)`;
+      wrapper.style.transformOrigin = 'center center';
 
       const textSpan = document.createElement('span');
       textSpan.style.fontFamily = el.fontFamily || "'DFKai-SB', '標楷體', KaiTi, serif";
@@ -1714,7 +1840,7 @@
         backEl.shape = frontEl.shape;
         backEl.fillMode = frontEl.fillMode;
         backEl.borderStyle = frontEl.borderStyle;
-        backEl.tiltAngle = frontEl.tiltAngle ? -frontEl.tiltAngle : 0;
+        backEl.tiltAngle = frontEl.tiltAngle || 0;
       }
 
       if (frontEl.align === 'left') {
@@ -1759,7 +1885,7 @@
         });
       }
 
-      // 圖章專屬屬性監聽 (使用安全空值檢查)
+      // 圖章專屬屬性監聽
       const pShape = document.getElementById('propStampShape');
       if (pShape) {
         pShape.addEventListener('change', (e) => {
@@ -1809,16 +1935,35 @@
         });
       }
 
-      const pSTilt = document.getElementById('propStampTilt');
-      if (pSTilt) {
-        pSTilt.addEventListener('change', (e) => {
-          const el = getSelectedElement();
-          if (el && el.type === 'stamp') {
-            el.tiltAngle = parseFloat(e.target.value) || 0;
-            afterElementPropertyChange(el);
-          }
-        });
+      // 圖章微傾角度即時監聽函式
+      const pSTiltRange = document.getElementById('propStampTiltRange');
+      const pSTiltNumber = document.getElementById('propStampTiltNumber');
+      const pSTiltLabel = document.getElementById('propStampTiltLabel');
+
+      function applyTiltAngle(newVal) {
+        const el = getSelectedElement();
+        if (el && el.type === 'stamp') {
+          const deg = Math.max(-45, Math.min(45, parseFloat(newVal) || 0));
+          el.tiltAngle = deg;
+          if (pSTiltRange) pSTiltRange.value = deg;
+          if (pSTiltNumber) pSTiltNumber.value = deg;
+          if (pSTiltLabel) pSTiltLabel.innerText = `${deg > 0 ? '+' : ''}${deg}°`;
+          afterElementPropertyChange(el);
+        }
       }
+
+      if (pSTiltRange) {
+        pSTiltRange.addEventListener('input', (e) => applyTiltAngle(e.target.value));
+      }
+      if (pSTiltNumber) {
+        pSTiltNumber.addEventListener('input', (e) => applyTiltAngle(e.target.value));
+      }
+      document.querySelectorAll('.btn-stamp-tilt').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const angle = parseFloat(btn.getAttribute('data-tilt')) || 0;
+          applyTiltAngle(angle);
+        });
+      });
 
       const pSSize = document.getElementById('propStampFontSize');
       if (pSSize) {
@@ -2090,7 +2235,15 @@
         document.getElementById('propStampText').value = el.text || '';
         document.getElementById('propStampFill').value = el.fillMode || 'transparent';
         document.getElementById('propStampBorder').value = el.borderStyle || 'solid';
-        document.getElementById('propStampTilt').value = el.tiltAngle !== undefined ? String(el.tiltAngle) : '0';
+        
+        const tiltVal = el.tiltAngle !== undefined ? el.tiltAngle : 0;
+        const tiltRange = document.getElementById('propStampTiltRange');
+        const tiltNum = document.getElementById('propStampTiltNumber');
+        const tiltLabel = document.getElementById('propStampTiltLabel');
+        if (tiltRange) tiltRange.value = tiltVal;
+        if (tiltNum) tiltNum.value = tiltVal;
+        if (tiltLabel) tiltLabel.innerText = `${tiltVal > 0 ? '+' : ''}${tiltVal}°`;
+
         document.getElementById('propStampColorPicker').value = el.color || '#dc2626';
         document.getElementById('propStampColorCode').innerText = el.color || '#dc2626';
         document.getElementById('propStampFontSize').value = el.fontSize || 12;
@@ -2115,7 +2268,7 @@
       if (hIn) hIn.value = el.height;
     }
 
-    /* =================== 4. Excel 資料庫匯入與管理 =================== */
+    /* =================== 4. Excel 與手動資料庫管理 =================== */
     function setupExcelImporter() {
       const dropZone = document.getElementById('dropZone');
       const fileInput = document.getElementById('excelFileInput');
@@ -2156,13 +2309,190 @@
       if (btnClear) {
         btnClear.addEventListener('click', () => {
           state.data = [];
-          state.fields = [];
           updateDataViews();
           calculatePagination();
           renderPreview();
-          showToast('名單已清空', 'info');
+          showToast('名單已全部清空', 'info');
         });
       }
+    }
+
+    /* 手動單筆新增、編輯與多筆批次貼上事件綁定 */
+    function setupManualDataHandlers() {
+      const modalSingle = document.getElementById('modalSingleRecord');
+      const formSingle = document.getElementById('formSingleRecord');
+      const btnOpenSingle = document.getElementById('btnOpenAddSingleModal');
+      const btnCloseSingle = document.getElementById('btnCloseSingleModal');
+      const btnCancelSingle = document.getElementById('btnCancelSingleModal');
+
+      const modalBatch = document.getElementById('modalBatchAdd');
+      const btnOpenBatch = document.getElementById('btnOpenBatchAddModal');
+      const btnCloseBatch = document.getElementById('btnCloseBatchModal');
+      const btnCancelBatch = document.getElementById('btnCancelBatchModal');
+      const btnConfirmBatch = document.getElementById('btnConfirmBatchAdd');
+      const textareaBatch = document.getElementById('textareaBatchInput');
+
+      // 開啟單筆新增彈窗
+      if (btnOpenSingle) {
+        btnOpenSingle.addEventListener('click', () => {
+          openSingleRecordModal(-1);
+        });
+      }
+
+      // 關閉單筆彈窗
+      const closeSingle = () => {
+        if (modalSingle) modalSingle.classList.add('hidden');
+      };
+      if (btnCloseSingle) btnCloseSingle.addEventListener('click', closeSingle);
+      if (btnCancelSingle) btnCancelSingle.addEventListener('click', closeSingle);
+
+      // 提交單筆表單 (新增或編輯)
+      if (formSingle) {
+        formSingle.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const editIdx = parseInt(document.getElementById('inputEditIndex').value, 10);
+          const fieldsToUse = state.fields.length > 0 ? state.fields : ['姓名', '單位', '職稱', '桌號'];
+          const newRecord = {};
+
+          fieldsToUse.forEach(f => {
+            const input = document.getElementById(`input_field_${f}`);
+            newRecord[f] = input ? input.value.trim() : '';
+          });
+
+          if (!newRecord['姓名']) {
+            showToast('請務必填寫「姓名」！', 'error');
+            return;
+          }
+
+          if (editIdx >= 0 && editIdx < state.data.length) {
+            // 編輯修改
+            state.data[editIdx] = newRecord;
+            showToast(`已成功更新「${newRecord['姓名']}」的資料！`, 'success');
+          } else {
+            // 新增
+            state.data.push(newRecord);
+            showToast(`已成功新增「${newRecord['姓名']}」！`, 'success');
+          }
+
+          if (state.fields.length === 0) {
+            state.fields = fieldsToUse;
+          }
+
+          closeSingle();
+          updateDataViews();
+          calculatePagination();
+          renderPreview();
+        });
+      }
+
+      // 開啟多筆批次貼上彈窗
+      if (btnOpenBatch) {
+        btnOpenBatch.addEventListener('click', () => {
+          if (textareaBatch) textareaBatch.value = '';
+          if (modalBatch) modalBatch.classList.remove('hidden');
+        });
+      }
+
+      // 關閉多筆彈窗
+      const closeBatch = () => {
+        if (modalBatch) modalBatch.classList.add('hidden');
+      };
+      if (btnCloseBatch) btnCloseBatch.addEventListener('click', closeBatch);
+      if (btnCancelBatch) btnCancelBatch.addEventListener('click', closeBatch);
+
+      // 確認解析批次貼上
+      if (btnConfirmBatch) {
+        btnConfirmBatch.addEventListener('click', () => {
+          const rawText = textareaBatch ? textareaBatch.value.trim() : '';
+          if (!rawText) {
+            showToast('請先貼上名單內容！', 'error');
+            return;
+          }
+
+          const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+          if (lines.length === 0) {
+            showToast('未偵測到有效文字行！', 'error');
+            return;
+          }
+
+          const targetFields = state.fields.length > 0 ? state.fields : ['姓名', '單位', '職稱', '桌號'];
+          const newRecords = [];
+
+          lines.forEach(line => {
+            // 支援以 Tab、逗號、多個連續空格或斜線分隔
+            const tokens = line.split(/[\t,，\s/]+/).filter(t => t.trim().length > 0);
+            if (tokens.length > 0) {
+              const rowObj = {};
+              targetFields.forEach((f, fIdx) => {
+                rowObj[f] = tokens[fIdx] || '';
+              });
+              // 若輸入 token 超過現存欄位數，額外字元全部放入最後一個欄位
+              if (tokens.length > targetFields.length) {
+                rowObj[targetFields[targetFields.length - 1]] += ' ' + tokens.slice(targetFields.length).join(' ');
+              }
+              newRecords.push(rowObj);
+            }
+          });
+
+          if (newRecords.length === 0) {
+            showToast('無法解析名單格式！', 'error');
+            return;
+          }
+
+          const isAppend = document.getElementById('chkBatchAppend')?.checked ?? true;
+          if (isAppend) {
+            state.data = state.data.concat(newRecords);
+          } else {
+            state.data = newRecords;
+          }
+
+          if (state.fields.length === 0) {
+            state.fields = targetFields;
+          }
+
+          closeBatch();
+          updateDataViews();
+          calculatePagination();
+          renderPreview();
+          showToast(`成功批次匯入 ${newRecords.length} 筆名單！`, 'success');
+        });
+      }
+    }
+
+    function openSingleRecordModal(index = -1) {
+      const modal = document.getElementById('modalSingleRecord');
+      const titleSpan = document.getElementById('modalSingleTitle');
+      const inputEditIdx = document.getElementById('inputEditIndex');
+      const container = document.getElementById('dynamicFieldsContainer');
+      if (!modal || !container) return;
+
+      const fieldsToRender = state.fields.length > 0 ? state.fields : ['姓名', '單位', '職稱', '桌號'];
+      const record = (index >= 0 && index < state.data.length) ? state.data[index] : null;
+
+      if (inputEditIdx) inputEditIdx.value = index;
+      if (titleSpan) {
+        titleSpan.innerHTML = index >= 0 
+          ? `<i class="fa-solid fa-user-pen text-indigo-400"></i> <span>編輯第 ${index + 1} 筆名單 (${escapeHtml(record['姓名'] || '')})</span>`
+          : `<i class="fa-solid fa-user-plus text-emerald-400"></i> <span>手動新增單筆名單</span>`;
+      }
+
+      container.innerHTML = '';
+      fieldsToRender.forEach(f => {
+        const fieldRow = document.createElement('div');
+        const val = record ? (record[f] || '') : '';
+        fieldRow.innerHTML = `
+          <label class="block font-bold text-slate-700 mb-1 flex items-center justify-between">
+            <span>${escapeHtml(f)}：</span>
+            ${f === '姓名' ? '<span class="text-rose-500 font-bold">* 必填</span>' : ''}
+          </label>
+          <input type="text" id="input_field_${escapeHtml(f)}" value="${escapeHtml(val)}" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:ring-1 focus:ring-indigo-500 font-medium" placeholder="請輸入 ${escapeHtml(f)}">
+        `;
+        container.appendChild(fieldRow);
+      });
+
+      modal.classList.remove('hidden');
+      const firstInput = container.querySelector('input');
+      if (firstInput) setTimeout(() => firstInput.focus(), 80);
     }
 
     function handleExcelFile(file) {
@@ -2190,7 +2520,7 @@
 
     function loadDataRecords(records) {
       state.data = records;
-      state.fields = records.length > 0 ? Object.keys(records[0]) : [];
+      state.fields = records.length > 0 ? Object.keys(records[0]) : ['姓名', '單位', '職稱', '桌號'];
       updateDataViews();
       calculatePagination();
       renderPreview();
@@ -2200,21 +2530,18 @@
       const chipsContainer = document.getElementById('chipsContainer');
       if (chipsContainer) {
         chipsContainer.innerHTML = '';
-        if (state.fields.length === 0) {
-          chipsContainer.innerHTML = '<span class="text-xs text-slate-400 italic">尚無欄位標籤</span>';
-        } else {
-          state.fields.forEach(f => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded font-mono transition';
-            btn.innerText = `{${f}}`;
-            btn.addEventListener('click', () => {
-              copyTextToClipboard(`{${f}}`);
-              showToast(`已複製變數標籤 {${f}}`, 'info');
-            });
-            chipsContainer.appendChild(btn);
+        const fieldsToShow = state.fields.length > 0 ? state.fields : ['姓名', '單位', '職稱', '桌號'];
+        fieldsToShow.forEach(f => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded font-mono transition';
+          btn.innerText = `{${f}}`;
+          btn.addEventListener('click', () => {
+            copyTextToClipboard(`{${f}}`);
+            showToast(`已複製變數標籤 {${f}}`, 'info');
           });
-        }
+          chipsContainer.appendChild(btn);
+        });
       }
 
       const countBadge = document.getElementById('dataCountBadge');
@@ -2226,32 +2553,72 @@
       const tbody = document.getElementById('dataTableBody');
       if (!thead || !tbody) return;
 
+      const fieldsToShow = state.fields.length > 0 ? state.fields : ['姓名', '單位', '職稱', '桌號'];
+
       if (state.data.length === 0) {
-        thead.innerHTML = '<tr><th class="p-2">#</th><th class="p-2">狀態</th></tr>';
-        tbody.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-slate-400">尚無名單資料</td></tr>';
+        thead.innerHTML = '<tr><th class="p-2 w-10 text-center">#</th><th class="p-2">姓名</th><th class="p-2">單位/職稱</th><th class="p-2 w-24 text-center">操作</th></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400">目前尚無資料，請點擊上方按鈕手動新增或上傳名單</td></tr>';
         return;
       }
 
-      let thHtml = '<tr class="bg-slate-100 border-b border-slate-200"><th class="p-2 w-8 text-slate-500">#</th>';
-      state.fields.forEach(f => {
+      let thHtml = '<tr class="bg-slate-100 border-b border-slate-200"><th class="p-2 w-10 text-slate-500 text-center">#</th>';
+      fieldsToShow.forEach(f => {
         thHtml += `<th class="p-2 text-slate-700 whitespace-nowrap font-semibold">${escapeHtml(f)}</th>`;
       });
-      thHtml += '</tr>';
+      thHtml += '<th class="p-2 w-24 text-center text-slate-700 whitespace-nowrap font-semibold">操作</th></tr>';
       thead.innerHTML = thHtml;
 
-      let tbHtml = '';
-      state.data.slice(0, 50).forEach((row, idx) => {
-        tbHtml += `<tr class="hover:bg-indigo-50/50"><td class="p-2 text-slate-400 font-mono">${idx + 1}</td>`;
-        state.fields.forEach(f => {
-          tbHtml += `<td class="p-2 text-slate-600 whitespace-nowrap">${escapeHtml(String(row[f] || ''))}</td>`;
-        });
-        tbHtml += '</tr>';
-      });
+      tbody.innerHTML = '';
+      state.data.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-indigo-50/50 transition-colors border-b border-slate-100 last:border-0';
 
-      if (state.data.length > 50) {
-        tbHtml += `<tr><td colspan="${state.fields.length + 1}" class="p-2 text-center text-slate-400 bg-slate-50">... 其餘 ${state.data.length - 50} 筆已省略</td></tr>`;
-      }
-      tbody.innerHTML = tbHtml;
+        let tds = `<td class="p-2 text-slate-400 font-mono text-center">${idx + 1}</td>`;
+        fieldsToShow.forEach(f => {
+          tds += `<td class="p-2 text-slate-700 whitespace-nowrap">${escapeHtml(String(row[f] || ''))}</td>`;
+        });
+
+        tds += `
+          <td class="p-2 text-center whitespace-nowrap">
+            <div class="flex items-center justify-center gap-1.5">
+              <button type="button" class="btn-row-edit text-[11px] bg-slate-100 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-900 border border-slate-200 px-2 py-0.5 rounded font-medium transition" data-index="${idx}" title="編輯此筆資料">
+                <i class="fa-solid fa-pen-to-square"></i> 編輯
+              </button>
+              <button type="button" class="btn-row-del text-[11px] bg-slate-100 hover:bg-rose-100 text-rose-600 hover:text-rose-800 border border-slate-200 px-2 py-0.5 rounded font-medium transition" data-index="${idx}" title="刪除此筆資料">
+                <i class="fa-solid fa-trash-can"></i> 刪除
+              </button>
+            </div>
+          </td>
+        `;
+        tr.innerHTML = tds;
+
+        // 綁定編輯與刪除事件
+        const editBtn = tr.querySelector('.btn-row-edit');
+        if (editBtn) {
+          editBtn.addEventListener('click', () => {
+            openSingleRecordModal(idx);
+          });
+        }
+
+        const delBtn = tr.querySelector('.btn-row-del');
+        if (delBtn) {
+          delBtn.addEventListener('click', () => {
+            deleteRecordByIndex(idx);
+          });
+        }
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function deleteRecordByIndex(idx) {
+      if (idx < 0 || idx >= state.data.length) return;
+      const targetName = state.data[idx]['姓名'] || `第 ${idx + 1} 筆`;
+      state.data.splice(idx, 1);
+      updateDataViews();
+      calculatePagination();
+      renderPreview();
+      showToast(`已成功刪除「${targetName}」！`, 'info');
     }
 
     /* =================== 5. 專案備份匯出與匯入功能 =================== */
@@ -2260,7 +2627,7 @@
       if (btnExport) {
         btnExport.addEventListener('click', () => {
           const backupData = {
-            version: '1.3',
+            version: '1.5',
             exportedAt: new Date().toISOString(),
             appName: 'A字三角立牌製作機',
             currentSizeKey: state.currentSizeKey,
@@ -2526,14 +2893,16 @@
         item.style.width = `${el.width}mm`;
         item.style.height = `${el.height}mm`;
         item.style.boxSizing = 'border-box';
-        item.style.overflow = 'hidden';
+        // 圖章放寬 overflow，保證傾斜旋轉時邊框不被裁切
+        item.style.overflow = el.type === 'stamp' ? 'visible' : 'hidden';
 
         if (el.rotate180) {
           item.style.transform = 'rotate(180deg)';
         }
 
         const inner = document.createElement('div');
-        inner.className = 'w-full h-full flex items-center';
+        inner.className = 'w-full h-full flex items-center justify-center';
+        inner.style.overflow = el.type === 'stamp' ? 'visible' : 'hidden';
 
         if (el.type === 'text') {
           const textDiv = document.createElement('div');
